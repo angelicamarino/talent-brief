@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Talent+ — A Brief — Newsletter Generator</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #E4ECF2;
+  color: #00070A;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Toolbar ── */
+.toolbar {
+  background: #0D1E2F;
+  height: 52px;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  border-bottom: 2px solid #0092D1;
+}
+.toolbar-brand { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.toolbar-logo {
+  height: 26px;
+  width: auto;
+  flex-shrink: 0;
+  display: block;
+}
+.toolbar-divider {
+  width: 1px;
+  height: 22px;
+  background: #2A3B4C;
+  flex-shrink: 0;
+}
+.toolbar-meta { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.toolbar-title { font-size: 13px; font-weight: 600; color: #F6F9FC; letter-spacing: 0.01em; white-space: nowrap; }
+.toolbar-sub   { font-size: 11px; color: #97999B; letter-spacing: 0.02em; white-space: nowrap; }
+
+.toolbar-right { display: flex; align-items: center; gap: 12px; }
+.copy-toast {
+  font-size: 12px;
+  color: #00A997;
+  opacity: 0;
+  transition: opacity 0.2s;
+  white-space: nowrap;
+}
+.copy-toast.show { opacity: 1; }
+.btn-copy {
+  background: #0092D1;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  letter-spacing: 0.01em;
+  transition: background 0.15s;
+}
+.btn-copy:hover  { background: #0083bc; }
+.btn-copy:active { background: #006fa3; }
+
+/* ── Workspace ── */
+.workspace {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ── Form Panel ── */
+.form-panel {
+  width: 400px;
+  flex-shrink: 0;
+  background: #fff;
+  border-right: 1px solid #DDE3EA;
+  overflow-y: auto;
+  padding: 20px 20px 48px;
+}
+
+.section-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.10em;
+  color: #97999B;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #EEF2F6;
+  margin-bottom: 14px;
+  margin-top: 26px;
+}
+.section-label:first-child { margin-top: 0; }
+
+.field { margin-bottom: 10px; }
+.field:last-child { margin-bottom: 0; }
+
+.field label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: #0D1E2F;
+  margin-bottom: 4px;
+  letter-spacing: 0.02em;
+}
+
+.field input[type="text"],
+.field input[type="number"],
+.field select,
+.field textarea {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid #DDE3EA;
+  border-radius: 5px;
+  font-size: 13px;
+  font-family: inherit;
+  color: #00070A;
+  background: #FAFCFE;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  line-height: 1.5;
+}
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  border-color: #0092D1;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(0,146,209,0.12);
+}
+.field textarea { resize: vertical; }
+
+.field-row {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  gap: 10px;
+}
+
+/* ── Item Cards ── */
+.items-container { margin-bottom: 10px; }
+
+.item-card {
+  background: #F8FAFC;
+  border: 1px solid #DDE3EA;
+  border-left: 3px solid var(--dot, #0092D1);
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 8px;
+}
+.item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.item-num {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #97999B;
+}
+.btn-remove {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #C0C8D0;
+  font-size: 14px;
+  line-height: 1;
+  padding: 2px 5px;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+}
+.btn-remove:hover { color: #EF4444; background: #FEF2F2; }
+
+.btn-add {
+  width: 100%;
+  padding: 8px 12px;
+  background: #fff;
+  border: 1.5px dashed #0092D1;
+  border-radius: 6px;
+  color: #0092D1;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  transition: background 0.15s;
+}
+.btn-add:hover { background: #F0F9FF; }
+
+.img-preview {
+  margin-top: 4px;
+  max-width: 100%;
+  max-height: 80px;
+  border-radius: 4px;
+  border: 1px solid #DDE3EA;
+  display: block;
+}
+.img-wrap {
+  position: relative;
+  display: inline-block;
+  margin-top: 4px;
+}
+.btn-remove-img {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: #EF4444;
+  color: #fff;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  font-size: 10px;
+  line-height: 14px;
+  text-align: center;
+  cursor: pointer;
+  padding: 0;
+}
+
+/* ── Preview Panel ── */
+.preview-panel {
+  flex: 1;
+  overflow-y: auto;
+  background: #E4ECF2;
+  padding: 28px 24px 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.preview-label {
+  align-self: flex-start;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.10em;
+  color: #97999B;
+  margin-bottom: 10px;
+}
+.preview-shell {
+  background: #fff;
+  width: 100%;
+  max-width: 700px;
+  border-radius: 4px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.10), 0 1px 4px rgba(0,0,0,0.06);
+}
+#email-preview {
+  font-family: system-ui, -apple-system, sans-serif;
+}
+</style>
+</head>
+<body>
+
+<!-- Toolbar -->
+<header class="toolbar">
+  <div class="toolbar-brand">
+    <svg class="toolbar-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 631.62 128.71" aria-label="Talent+ logo" role="img">
+      <defs>
+        <linearGradient id="tb-lg-1" x1="523.51" y1="31.68" x2="566.67" y2="67.89" gradientUnits="userSpaceOnUse">
+          <stop offset=".05" stop-color="#4ec3e0"/>
+          <stop offset=".17" stop-color="#43b2d1"/>
+          <stop offset=".4" stop-color="#2887ac"/>
+          <stop offset=".7" stop-color="#004976"/>
+          <stop offset="1" stop-color="#001f32"/>
+        </linearGradient>
+        <linearGradient id="tb-lg-2" x1="561.68" y1="61.16" x2="615.76" y2="92.39" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stop-color="#00a997"/>
+          <stop offset=".26" stop-color="#38ba5e"/>
+          <stop offset=".54" stop-color="#6bc92b"/>
+          <stop offset=".74" stop-color="#8bd30b"/>
+          <stop offset=".86" stop-color="#97d700"/>
+        </linearGradient>
+      </defs>
+      <g>
+        <path fill="#fff" d="M46.24,109.4c2.7,0,5.3-.24,7.79-.73,2.49-.49,4.97-1.16,7.46-2.03v18.01c-2.6,1.19-5.82,2.17-9.65,2.92-3.84.76-8.03,1.14-12.57,1.14-5.3,0-10.04-.87-14.2-2.6-4.16-1.73-7.46-4.71-9.9-8.92s-3.65-10.17-3.65-17.85v-42.67H0v-10.22l13.3-8.11,6.98-18.66h15.41v18.82h24.83v18.17h-24.83v42.67c0,3.35.97,5.87,2.92,7.55,1.95,1.68,4.49,2.51,7.63,2.51Z"/>
+        <path fill="#fff" d="M115.69,36.7c11.9,0,21.01,2.57,27.34,7.71,6.33,5.14,9.49,13.01,9.49,23.61v59.06h-16.88l-4.71-12.01h-.65c-3.79,4.76-7.79,8.22-12.01,10.38-4.22,2.16-10.01,3.25-17.36,3.25-7.9,0-14.44-2.27-19.63-6.81-5.19-4.54-7.79-11.63-7.79-21.26s3.3-16.33,9.9-20.77c6.6-4.43,16.49-6.92,29.69-7.46l15.41-.49v-3.89c0-4.65-1.22-8.06-3.65-10.22-2.43-2.16-5.82-3.25-10.14-3.25s-8.55.62-12.66,1.87c-4.11,1.25-8.22,2.79-12.33,4.62l-7.95-16.39c4.65-2.38,9.9-4.3,15.74-5.76,5.84-1.46,11.9-2.19,18.17-2.19ZM128.51,86.03l-9.41.32c-7.79.22-13.2,1.62-16.23,4.22-3.03,2.6-4.54,6-4.54,10.22,0,3.68,1.08,6.3,3.24,7.87,2.16,1.57,4.97,2.35,8.44,2.35,5.19,0,9.57-1.54,13.14-4.62,3.57-3.08,5.35-7.44,5.35-13.06v-7.3Z"/>
+        <path fill="#fff" d="M201.52,127.08h-24.18V3.77h24.18v123.32Z"/>
+        <path fill="#fff" d="M263.34,36.87c12.22,0,21.91,3.49,29.04,10.47,7.14,6.98,10.71,16.9,10.71,29.77v11.68h-57.12c.21,6.82,2.24,12.17,6.08,16.06,3.84,3.89,9.17,5.84,15.98,5.84,5.62,0,10.79-.57,15.5-1.7,4.71-1.14,9.55-2.89,14.52-5.27v18.66c-4.44,2.17-9.03,3.76-13.79,4.79-4.76,1.03-10.55,1.54-17.36,1.54-8.87,0-16.71-1.65-23.53-4.95-6.82-3.3-12.17-8.28-16.06-14.93-3.89-6.65-5.84-15.12-5.84-25.39s1.76-18.88,5.27-25.8c3.51-6.92,8.41-12.11,14.69-15.58,6.27-3.46,13.57-5.19,21.9-5.19ZM263.51,54.07c-4.76,0-8.65,1.52-11.68,4.54-3.03,3.03-4.81,7.73-5.36,14.12h33.91c-.11-5.3-1.54-9.74-4.3-13.31-2.76-3.57-6.95-5.35-12.58-5.35Z"/>
+        <path fill="#fff" d="M373.03,36.87c9.52,0,17.14,2.57,22.88,7.71,5.73,5.14,8.6,13.39,8.6,24.75v57.76h-24.18v-51.76c0-6.38-1.14-11.17-3.41-14.36-2.27-3.19-5.9-4.79-10.87-4.79-7.36,0-12.39,2.52-15.09,7.54-2.71,5.03-4.06,12.25-4.06,21.66v41.7h-24.18V38.49h18.5l3.25,11.36h1.3c2.81-4.54,6.68-7.84,11.6-9.9,4.92-2.05,10.14-3.08,15.66-3.08Z"/>
+        <path fill="#fff" d="M466.65,109.4c2.7,0,5.3-.24,7.79-.73,2.49-.49,4.97-1.16,7.46-2.03v18.01c-2.6,1.19-5.82,2.17-9.65,2.92-3.84.76-8.03,1.14-12.58,1.14-5.3,0-10.04-.87-14.2-2.6-4.17-1.73-7.46-4.71-9.9-8.92s-3.65-10.17-3.65-17.85v-42.67h-11.52v-10.22l13.3-8.11,6.98-18.66h15.42v18.82h24.82v18.17h-24.82v42.67c0,3.35.97,5.87,2.92,7.55,1.95,1.68,4.49,2.51,7.63,2.51Z"/>
+        <path fill="url(#tb-lg-1)" d="M552.01,45.53c-7.33.47-15.39-.99-20.43-2.17-2.19-.75-6.04-1.15-6.04-1.15-5.81-.73-10.85.96-15.31,5.42-7.67,7.67-7.67,20.1,0,27.76,2.34,2.34,5.13,3.96,8.1,4.87h0s.05.02.12.04c1.56.47,3.17.72,4.79.79,8.14.97,24.99,1.28,39.5-9.35,3.84-2.82,11.67-13.6,14.13-16.89,8.29-11.1,8.24-26.48,8.24-26.48,0,0-2.5,15.17-33.08,17.15Z"/>
+        <path fill="#09c" d="M585.08,28.63c.08-3.18-.24-7.14-.51-9.79-.05-.97-.14-1.93-.33-2.89,0-.01,0-.03,0-.03h0c-.74-3.71-2.54-7.25-5.41-10.13-7.73-7.73-20.27-7.73-28,0-6.61,6.61-7.55,16.73-2.85,24.35h-.02s.05.07.12.18c.77,1.23,1.68,2.4,2.75,3.47.56.56,1.16,1.07,1.77,1.55,2.36,2.31,5.76,5.28,10.48,8.76,18.67-4.04,21.67-14.02,22.01-15.48Z"/>
+        <path fill="url(#tb-lg-2)" d="M626.77,46.97c-3.36-3.79-7.88-5.92-12.56-6.37v-.13s-12.67-2.18-23.52,2.01c-6.54,2.53-16.7,10.35-21.23,14.91-5.95,6-8.24,7.97-13.01,13.91-5.45,6.79-9.05,15.4-10.06,21.6-1.06,6.48-1.12,11.68-1.12,11.68,0,0,15.37-24.27,38.88-26.59,8.73-.86,19-.01,24.27.56,1.1.23,2.22.37,3.35.4.1.01.16.02.16.02v-.02c4.69.11,9.43-1.47,13.21-4.82,7.95-7.06,8.68-19.22,1.63-27.18Z"/>
+        <path fill="#009080" d="M545.27,104.59c-.51,5.48,1.1,11.6,5.18,15.91,7.52,7.94,20.05,8.27,27.99.75,4.64-4.4,6.18-10.33,6.07-16.4-.05-5.41-.17-20.21-.18-26.86-.06,0-.12,0-.18.02-23.51,2.32-38.85,26.29-38.88,26.59Z"/>
+      </g>
+    </svg>
+    <span class="toolbar-divider"></span>
+    <div class="toolbar-meta">
+      <span class="toolbar-title">A Brief — Newsletter Generator</span>
+      <span class="toolbar-sub">HR PID Team · People and Culture Group, UNOPS</span>
+    </div>
+  </div>
+  <div class="toolbar-right">
+    <span class="copy-toast" id="copy-toast">Copied — paste into Gmail ✓</span>
+    <button class="btn-copy" onclick="copyForGmail()">Paste into Gmail</button>
+    <button class="btn-copy" onclick="copyHTML()" style="background:#2A3B4C;margin-left:4px;" title="Copy raw HTML source code">HTML</button>
+  </div>
+</header>
+
+<!-- Workspace -->
+<div class="workspace">
+
+  <!-- Form Panel -->
+  <aside class="form-panel">
+
+    <div class="section-label">Issue Details</div>
+    <div class="field-row">
+      <div class="field">
+        <label for="f-issue">Issue #</label>
+        <input type="number" id="f-issue" value="1" min="1" oninput="render()">
+      </div>
+      <div class="field">
+        <label for="f-month">Month &amp; Year</label>
+        <input type="text" id="f-month" value="April 2026" placeholder="e.g. April 2026" oninput="render()">
+      </div>
+    </div>
+
+    <div class="section-label">Intro / Highlights</div>
+    <div class="field">
+      <label for="f-intro">Welcome paragraph</label>
+      <textarea id="f-intro" rows="5" placeholder="Write a short intro for this issue..." oninput="render()"></textarea>
+    </div>
+
+    <div class="section-label">Talent+ Updates</div>
+    <div class="items-container" id="items-container"></div>
+    <button class="btn-add" onclick="addItem()">+ Add update item</button>
+
+    <div class="section-label">People – Talent Workspace</div>
+    <div class="field">
+      <label for="f-badge">Badge text</label>
+      <input type="text" id="f-badge" value="Kicked off April 2026" oninput="render()">
+    </div>
+    <div class="field">
+      <label for="f-workspace">Update paragraph</label>
+      <textarea id="f-workspace" rows="5" placeholder="Describe what is happening with the Talent Workspace project this month..." oninput="render()"></textarea>
+    </div>
+    <div class="field">
+      <label>Image (optional)</label>
+      <div id="ws-img-preview"></div>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:4px;">
+        <input type="file" accept="image/*" onchange="handleWorkspaceImage(this)" style="font-size:12px;flex:1;min-width:0;">
+        <select id="f-ws-imgsize" onchange="workspaceImageSize=this.value;render();" style="width:auto;padding:4px 6px;font-size:12px;">
+          <option value="100">Small</option>
+          <option value="160" selected>Medium</option>
+          <option value="240">Large</option>
+        </select>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- Preview Panel -->
+  <main class="preview-panel">
+    <div class="preview-label">Live preview — email output</div>
+    <div class="preview-shell">
+      <div id="email-preview"></div>
+    </div>
+  </main>
+
+</div>
+
+<script>
+/* ── Config ── */
+const CATS = {
+  system:   { label: 'System change',   color: '#0092D1' },
+  process:  { label: 'Process change',  color: '#00A997' },
+  behavior: { label: 'Behavior change', color: '#004976' },
+};
+
+/* ── State ── */
+let items  = [];
+let nextId = 0;
+let LOGO_B64 = '';
+let workspaceImage = '';
+let workspaceImageSize = '160';
+
+const IMG_SIZES = { '100': 'Small', '160': 'Medium', '240': 'Large' };
+
+/* ── Helpers ── */
+function esc(s) {
+  return String(s ?? '')
+    .replace(/&/g,  '&amp;')
+    .replace(/</g,  '&lt;')
+    .replace(/>/g,  '&gt;')
+    .replace(/"/g,  '&quot;');
+}
+
+function nl2p(text, style) {
+  const lines = (text || '').split('\n').map(l => l.trim()).filter(Boolean);
+  if (!lines.length) return '';
+  return lines.map(l => `<p style="${style}">${esc(l)}</p>`).join('');
+}
+
+function buildLogoHeader() {
+  if (LOGO_B64) {
+    return `<table cellpadding="0" cellspacing="0" border="0" style="margin:0 0 5px 0;margin-left:auto;"><tr>
+      <td style="vertical-align:middle;padding-right:10px;">
+        <img src="${LOGO_B64}" width="137" height="28" alt="Talent+" style="display:block;width:137px;height:28px;">
+      </td>
+      <td style="vertical-align:middle;">
+        <h1 style="margin:0;font-size:22px;font-weight:500;color:#0092D1;line-height:1.2;font-family:system-ui,-apple-system,sans-serif;">A Brief</h1>
+      </td>
+    </tr></table>`;
+  }
+  return `<h1 style="margin:0 0 5px 0;font-size:22px;font-weight:500;color:#0092D1;line-height:1.2;font-family:system-ui,-apple-system,sans-serif;text-align:right;">Talent+ &mdash; A Brief</h1>`;
+}
+
+/* ── Item management ── */
+function addItem() {
+  const id = nextId++;
+  items.push({ id, category: 'system', title: '', description: '', image: '', imageSize: '160' });
+  rebuildForms();
+  render();
+  requestAnimationFrame(() => document.getElementById(`it-title-${id}`)?.focus());
+}
+
+function removeItem(id) {
+  items = items.filter(i => i.id !== id);
+  rebuildForms();
+  render();
+}
+
+function syncItem(id) {
+  const item = items.find(i => i.id === id);
+  if (!item) return;
+  item.category    = document.getElementById(`it-cat-${id}`)?.value      ?? item.category;
+  item.title       = document.getElementById(`it-title-${id}`)?.value    ?? item.title;
+  item.description = document.getElementById(`it-desc-${id}`)?.value     ?? item.description;
+  item.imageSize   = document.getElementById(`it-imgsize-${id}`)?.value  ?? item.imageSize;
+  const card = document.getElementById(`icard-${id}`);
+  if (card) card.style.setProperty('--dot', CATS[item.category]?.color ?? '#0092D1');
+  render();
+}
+
+function handleItemImage(id, input) {
+  const file = input.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const item = items.find(i => i.id === id);
+    if (item) { item.image = reader.result; rebuildForms(); render(); }
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeItemImage(id) {
+  const item = items.find(i => i.id === id);
+  if (item) { item.image = ''; rebuildForms(); render(); }
+}
+
+function handleWorkspaceImage(input) {
+  const file = input.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    workspaceImage = reader.result;
+    render();
+    updateWorkspacePreview();
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeWorkspaceImage() {
+  workspaceImage = '';
+  render();
+  updateWorkspacePreview();
+}
+
+function updateWorkspacePreview() {
+  const el = document.getElementById('ws-img-preview');
+  if (!el) return;
+  el.innerHTML = workspaceImage
+    ? `<div class="img-wrap"><img class="img-preview" src="${workspaceImage}"><button class="btn-remove-img" onclick="removeWorkspaceImage()" title="Remove image">&#x2715;</button></div>`
+    : '';
+}
+
+function rebuildForms() {
+  document.getElementById('items-container').innerHTML = items.map((item, idx) => {
+    const dot = CATS[item.category]?.color ?? '#0092D1';
+    return `<div class="item-card" id="icard-${item.id}" style="--dot:${dot}">
+  <div class="item-header">
+    <span class="item-num">Item ${idx + 1}</span>
+    <button class="btn-remove" onclick="removeItem(${item.id})" title="Remove item">&#x2715;</button>
+  </div>
+  <div class="field">
+    <label for="it-cat-${item.id}">Category</label>
+    <select id="it-cat-${item.id}" onchange="syncItem(${item.id})">
+      <option value="system"   ${item.category === 'system'   ? 'selected' : ''}>System change</option>
+      <option value="process"  ${item.category === 'process'  ? 'selected' : ''}>Process change</option>
+      <option value="behavior" ${item.category === 'behavior' ? 'selected' : ''}>Behavior change</option>
+    </select>
+  </div>
+  <div class="field">
+    <label for="it-title-${item.id}">Title</label>
+    <input type="text" id="it-title-${item.id}" value="${esc(item.title)}"
+      placeholder="e.g. Reference checks now in Talent+"
+      oninput="syncItem(${item.id})">
+  </div>
+  <div class="field">
+    <label for="it-desc-${item.id}">Description</label>
+    <textarea id="it-desc-${item.id}" rows="2"
+      placeholder="One sentence explaining what changed and why it matters."
+      oninput="syncItem(${item.id})">${esc(item.description)}</textarea>
+  </div>
+  <div class="field" style="margin-bottom:0">
+    <label>Image (optional)</label>
+    ${item.image
+      ? `<div class="img-wrap"><img class="img-preview" src="${item.image}"><button class="btn-remove-img" onclick="removeItemImage(${item.id})" title="Remove image">&#x2715;</button></div>`
+      : ''}
+    <div style="display:flex;gap:8px;align-items:center;margin-top:4px;">
+      <input type="file" accept="image/*" onchange="handleItemImage(${item.id}, this)" style="font-size:12px;flex:1;min-width:0;">
+      <select id="it-imgsize-${item.id}" onchange="syncItem(${item.id})" style="width:auto;padding:4px 6px;font-size:12px;">
+        ${Object.entries(IMG_SIZES).map(([v,l]) => `<option value="${v}" ${item.imageSize === v ? 'selected' : ''}>${l}</option>`).join('')}
+      </select>
+    </div>
+  </div>
+</div>`;
+  }).join('');
+}
+
+/* ── Read form values ── */
+function vals() {
+  return {
+    issue:     (document.getElementById('f-issue')?.value     || '1').trim(),
+    month:     (document.getElementById('f-month')?.value     || 'April 2026').trim(),
+    intro:      document.getElementById('f-intro')?.value     || '',
+    badge:     (document.getElementById('f-badge')?.value     || 'Kicked off April 2026').trim(),
+    workspace:  document.getElementById('f-workspace')?.value || '',
+    workspaceImage: workspaceImage,
+    workspaceImageSize: workspaceImageSize,
+    items: items.map(item => ({
+      category:    item.category,
+      title:       document.getElementById(`it-title-${item.id}`)?.value ?? item.title,
+      description: document.getElementById(`it-desc-${item.id}`)?.value  ?? item.description,
+      image:       item.image || '',
+      imageSize:   item.imageSize || '160',
+    })),
+  };
+}
+
+/* ── Email HTML builders ── */
+function buildItems(itemsData) {
+  if (!itemsData.length) {
+    return `<tr><td style="padding:16px 0;font-size:13px;color:#97999B;font-style:italic;font-family:system-ui,-apple-system,sans-serif;">No update items added yet.</td></tr>`;
+  }
+  return itemsData.map(item => {
+    const title = esc(item.title)       || '<em style="color:#97999B;">Untitled</em>';
+    const desc  = esc(item.description) || '';
+    const textHTML = `
+      <p style="margin:0 0 3px 0;font-size:14px;font-weight:600;color:#0D1E2F;line-height:1.4;">${title}</p>
+      ${desc ? `<p style="margin:0;font-size:14px;font-weight:400;color:#00070A;line-height:1.7;">${desc}</p>` : ''}`;
+
+    if (item.image) {
+      return `<tr>
+  <td style="padding:12px 0;border-bottom:1px solid #EDF2F7;vertical-align:top;">
+    <table cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
+      <td style="vertical-align:top;font-family:system-ui,-apple-system,sans-serif;">${textHTML}</td>
+      <td width="${item.imageSize}" style="vertical-align:top;padding-left:16px;">
+        <img src="${item.image}" width="${item.imageSize}" style="display:block;border-radius:4px;width:${item.imageSize}px;height:auto;">
+      </td>
+    </tr></table>
+  </td>
+</tr>`;
+    }
+
+    return `<tr>
+  <td style="padding:12px 0;border-bottom:1px solid #EDF2F7;vertical-align:top;font-family:system-ui,-apple-system,sans-serif;">${textHTML}
+  </td>
+</tr>`;
+  }).join('\n');
+}
+
+function buildEmailBody(v) {
+  const pStyle  = 'margin:0 0 8px 0;font-size:14px;line-height:1.7;color:#00070A;font-family:system-ui,-apple-system,sans-serif;';
+  const emptyP  = `<p style="margin:0;font-size:14px;line-height:1.7;color:#97999B;font-style:italic;font-family:system-ui,-apple-system,sans-serif;">—</p>`;
+
+  const introHTML     = nl2p(v.intro,     pStyle) || emptyP;
+  const workspaceHTML = nl2p(v.workspace, pStyle) || emptyP;
+
+  return `<table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#FFFFFF;">
+<tr><td align="center" style="padding:32px 16px;">
+<table cellpadding="0" cellspacing="0" border="0" width="620" style="max-width:620px;width:100%;">
+
+  <!-- HEADER -->
+  <tr><td style="padding-bottom:18px;border-bottom:2px solid #0092D1;">
+    <table cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
+      <td style="vertical-align:middle;font-family:system-ui,-apple-system,sans-serif;">
+        <p style="margin:0;font-size:13px;font-weight:600;color:#0D1E2F;line-height:1.4;">Process Innovation<br>&amp; Digitalization Programme</p>
+      </td>
+      <td style="vertical-align:middle;text-align:right;">
+        ${buildLogoHeader()}
+        <p style="margin:0;font-size:12px;color:#97999B;font-family:system-ui,-apple-system,sans-serif;">Issue ${esc(v.issue)} &middot; ${esc(v.month)}</p>
+      </td>
+    </tr></table>
+  </td></tr>
+
+  <!-- INTRO -->
+  <tr><td style="padding-top:24px;padding-bottom:4px;">
+    <table cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
+      <td style="background:#F6F9FC;border-radius:8px;padding:16px 20px;">
+        ${introHTML}
+      </td>
+    </tr></table>
+  </td></tr>
+
+  <!-- TALENT+ UPDATES -->
+  <tr><td style="padding-top:32px;">
+    <h2 style="margin:0 0 4px 0;font-size:18px;font-weight:600;color:#0092D1;font-family:system-ui,-apple-system,sans-serif;">Talent+ Updates</h2>
+    <p style="margin:0 0 16px 0;font-size:13px;color:#97999B;line-height:1.5;font-family:system-ui,-apple-system,sans-serif;">Changes made this month</p>
+
+    <!-- Items -->
+    <table cellpadding="0" cellspacing="0" border="0" width="100%">
+      ${buildItems(v.items)}
+    </table>
+  </td></tr>
+
+  <!-- PEOPLE – TALENT WORKSPACE -->
+  <tr><td style="padding-top:36px;">
+    <h2 style="margin:0 0 4px 0;font-size:18px;font-weight:600;color:#0092D1;font-family:system-ui,-apple-system,sans-serif;">People &ndash; Talent Workspace</h2>
+    <p style="margin:0 0 16px 0;font-size:13px;color:#97999B;line-height:1.5;font-family:system-ui,-apple-system,sans-serif;">A new platform from the HR PID Team</p>
+    <table cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
+      <td style="background:#F5FBFD;border-radius:8px;padding:16px 20px;border:1px solid #C8D8E4;">${v.workspaceImage ? `
+        <table cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
+          <td style="vertical-align:top;">
+            <p style="margin:0 0 12px 0;">
+              <span style="display:inline-block;background:#4EC3E0;color:#004976;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;padding:3px 10px;border-radius:100px;font-family:system-ui,-apple-system,sans-serif;">${esc(v.badge)}</span>
+            </p>
+            ${workspaceHTML}
+          </td>
+          <td width="${v.workspaceImageSize}" style="vertical-align:top;padding-left:16px;">
+            <img src="${v.workspaceImage}" width="${v.workspaceImageSize}" style="display:block;border-radius:4px;width:${v.workspaceImageSize}px;height:auto;">
+          </td>
+        </tr></table>` : `
+        <p style="margin:0 0 12px 0;">
+          <span style="display:inline-block;background:#4EC3E0;color:#004976;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;padding:3px 10px;border-radius:100px;font-family:system-ui,-apple-system,sans-serif;">${esc(v.badge)}</span>
+        </p>
+        ${workspaceHTML}`}
+      </td>
+    </tr></table>
+  </td></tr>
+
+  <!-- FOOTER -->
+  <tr><td style="padding-top:32px;padding-bottom:8px;border-top:1px solid #DDE3EA;margin-top:32px;">
+    <p style="margin:0 0 4px 0;font-size:12px;color:#97999B;font-family:system-ui,-apple-system,sans-serif;">Sent by the HR PID team &middot; People and Culture Group, UNOPS</p>
+    <p style="margin:0 0 4px 0;font-size:12px;color:#97999B;font-family:system-ui,-apple-system,sans-serif;">Questions or feedback? Reply to this email.</p>
+    <p style="margin:0;font-size:12px;color:#97999B;font-family:system-ui,-apple-system,sans-serif;">Know someone who should receive this? Forward it and ask them to reach out to be added to the list.</p>
+  </td></tr>
+
+</table>
+</td></tr></table>`;
+}
+
+function buildFullHTML(v) {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Talent+ &mdash; A Brief &mdash; Issue ${esc(v.issue)}, ${esc(v.month)}</title>
+</head>
+<body style="margin:0;padding:0;background:#FFFFFF;">
+${buildEmailBody(v)}
+</body>
+</html>`;
+}
+
+/* ── Render & Copy ── */
+function render() {
+  document.getElementById('email-preview').innerHTML = buildEmailBody(vals());
+}
+
+function copyForGmail() {
+  const html = buildEmailBody(vals());
+  const blob = new Blob([html], { type: 'text/html' });
+  const textBlob = new Blob([html], { type: 'text/plain' });
+  const item = new ClipboardItem({ 'text/html': blob, 'text/plain': textBlob });
+  navigator.clipboard.write([item]).then(showToast).catch(() => {
+    fallbackRichCopy(html);
+  });
+}
+
+function fallbackRichCopy(html) {
+  const el = document.createElement('div');
+  el.innerHTML = html;
+  el.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;';
+  document.body.appendChild(el);
+  const range = document.createRange();
+  range.selectNodeContents(el);
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+  try { document.execCommand('copy'); showToast(); }
+  catch(e) { alert('Copy failed. Please try the HTML button instead.'); }
+  sel.removeAllRanges();
+  document.body.removeChild(el);
+}
+
+function copyHTML() {
+  const html = buildFullHTML(vals());
+  if (navigator.clipboard?.writeText) {
+    navigator.clipboard.writeText(html).then(showToast).catch(() => fallbackCopy(html));
+  } else {
+    fallbackCopy(html);
+  }
+}
+
+function fallbackCopy(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); showToast(); }
+  catch(e) { alert('Copy failed. Please copy the HTML manually.'); }
+  document.body.removeChild(ta);
+}
+
+function showToast() {
+  const t = document.getElementById('copy-toast');
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+/* ── Init ── */
+document.getElementById('f-intro').value =
+  `Welcome to the first issue of Talent+: A Brief — a monthly newsletter from the HR PID Team keeping you up to date on everything happening in Talent+ and the broader People technology space.\n\nIf this is useful to you, please share it with colleagues who should be on the list.`;
+
+document.getElementById('f-workspace').value =
+  `The HR PID Team has just kicked off the People – Talent Workspace, a new platform designed to bring all HR processes and tools into one place for everyone at UNOPS.\n\nThis project is the next step in the People technology journey, building on the foundation laid by Talent+. Work began in April 2026 and we will keep you updated here each month as it progresses.`;
+
+// Seed a starter item
+addItem();
+setTimeout(() => {
+  const first = items[0];
+  if (!first) return;
+  const titleEl = document.getElementById(`it-title-${first.id}`);
+  const descEl  = document.getElementById(`it-desc-${first.id}`);
+  if (titleEl) titleEl.value = 'Reference checks now in Talent+';
+  if (descEl)  descEl.value  = 'Reference checks can now be initiated and tracked directly within Talent+, reducing the need to manage this step outside the system.';
+  syncItem(first.id);
+}, 10);
+
+render();
+
+fetch('logo/black_logo_b64.txt')
+  .then(r => r.text())
+  .then(data => { LOGO_B64 = data.trim(); render(); });
+</script>
+</body>
+</html>
