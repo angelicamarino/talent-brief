@@ -1,0 +1,539 @@
+/* ==========================================================================
+   BOB Brand Design Tokens
+
+   Brand hue: Cool blue (#0092d1, ~198°)
+
+   Principles (from design-tip-brand-hue):
+   - Every neutral carries a trace of the brand hue
+   - Shadows carry brand temperature, never pure black
+   - Text colors lean cool blue-grey, never flat grey
+   - Dark mode is tinted navy, never #000 or #18181b
+   - Interactive states use brand-subtle overlays, never flat grey
+   ========================================================================== */
+
+
+/* --------------------------------------------------------------------------
+   1. BRAND PALETTE — Invariant across all themes
+   -------------------------------------------------------------------------- */
+
+:root {
+  /* Primary */
+  --color-brand-primary-50: #f0f8ff;
+  --color-brand-primary-100: #e3f2fd;
+  --color-brand-primary-200: #b3e0f7;
+  --color-brand-primary-300: #7dccf0;
+  --color-brand-primary-400: #4ec3e0;
+  --color-brand-primary: #0092d1;
+  --color-brand-primary-600: #007bb8;
+  --color-brand-primary-700: #005a8a;
+  --color-brand-primary-800: #004976;
+  --color-brand-primary-900: #003455;
+
+  /* Secondary */
+  --color-brand-secondary-50: #f0f6ff;
+  --color-brand-secondary-100: #e3f0fd;
+  --color-brand-secondary-200: #b3d4f7;
+  --color-brand-secondary-300: #7db8f0;
+  --color-brand-secondary-400: #4080b8;
+  --color-brand-secondary: #004976;
+  --color-brand-secondary-600: #003a5f;
+  --color-brand-secondary-700: #002b47;
+  --color-brand-secondary-800: #001f35;
+  --color-brand-secondary-900: #001426;
+
+  /* Accents */
+  --color-brand-accent-yellow: #cc8400;
+  --color-brand-accent-yellow-light: #d49207;
+  --color-brand-accent-yellow-lighter: #f59e0b;
+  --color-brand-accent-yellow-dark: #92400e;
+  --color-brand-accent-yellow-darker: #78350f;
+  --color-brand-accent-orange: #e85c0e;
+  --color-brand-accent-cherry: #991e66;
+  --color-brand-accent-lime: #c4d600;
+  --color-brand-accent-teal: #00a997;
+  --color-brand-accent-ocean: #4ec3e0;
+
+  /* Neutrals (raw reference — use semantic tokens in components) */
+  --color-brand-neutral-50: #f9fafb;
+  --color-brand-neutral-100: #f3f4f6;
+  --color-brand-neutral-200: #e8e9ea;
+  --color-brand-neutral-300: #d1d2d3;
+  --color-brand-neutral-400: #b8babb;
+  --color-brand-neutral-500: #97999b;
+  --color-brand-neutral-600: #7a7c7e;
+  --color-brand-neutral-700: #5c5e60;
+  --color-brand-neutral-800: #1a1b1c;
+  --color-brand-neutral-900: #00070a;
+
+  /* Semantic: Feedback — Success (emerald ramp) */
+  --color-brand-success-50: #ecf1ef;
+  --color-brand-success-100: #d5e3de;
+  --color-brand-success-lighter: #34d399;
+  --color-brand-success-light: #16c487;
+  --color-brand-success: #10b981;
+  --color-brand-success-dark: #059669;
+  --color-brand-success-darker: #047857;
+  --color-brand-success-900: #064e3b;
+  --color-brand-success-950: #022c22;
+
+  /* Semantic: Feedback — Warning / Error / Info */
+  --color-brand-warning: #cc8400;
+  --color-brand-warning-light: #f59e0b;
+  --color-brand-error: #991e66;
+  --color-brand-info: #4ec3e0;
+
+  /* Category Colors */
+  --color-brand-category-1: #3b82f6;
+  --color-brand-category-1-light: #dbeafe;
+  --color-brand-category-1-text: #1e40af;
+  --color-brand-category-2: var(--color-brand-success);
+  --color-brand-category-2-light: var(--color-brand-success-100);
+  --color-brand-category-2-text: var(--color-brand-success-darker);
+  --color-brand-category-3: #8b5cf6;
+  --color-brand-category-3-light: #ede9fe;
+  --color-brand-category-3-text: #5b21b6;
+  --color-brand-category-4: #f59e0b;
+  --color-brand-category-4-light: #fef3c7;
+  --color-brand-category-4-text: #92400e;
+  --color-brand-category-5: #ef4444;
+  --color-brand-category-5-light: #fee2e2;
+  --color-brand-category-5-text: #991b1b;
+
+  /* Visualization Colors */
+  --color-brand-viz-experience: #ec4899;
+  --color-brand-viz-experience-text: #db2777;
+  --color-brand-viz-certifications: #3b82f6;
+  --color-brand-viz-certifications-text: #2563eb;
+  --color-brand-viz-skills: #8b5cf6;
+  --color-brand-viz-skills-text: #b45309;
+  --color-brand-viz-languages: #f59e0b;
+  --color-brand-viz-languages-text: #d97706;
+  --color-brand-viz-sectors: var(--color-brand-success);
+  --color-brand-viz-sectors-text: var(--color-brand-success-dark);
+
+
+  /* --------------------------------------------------------------------------
+     2. TYPOGRAPHY
+     -------------------------------------------------------------------------- */
+
+  --font-family-display: 'Inter', 'Noto Sans', system-ui, sans-serif;
+  --font-family-body: 'Inter', 'Noto Sans', system-ui, sans-serif;
+  --font-family-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, Consolas, monospace;
+
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.8125rem;
+  --font-size-base: 0.9375rem;
+  --font-size-md: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 1.875rem;
+  --font-size-4xl: 2.25rem;
+  --font-size-5xl: 3rem;
+
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  --line-height-tight: 1.2;
+  --line-height-snug: 1.35;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.65;
+
+  --letter-spacing-tight: -0.02em;
+  --letter-spacing-normal: 0;
+  --letter-spacing-wide: 0.02em;
+  --letter-spacing-wider: 0.06em;
+  --letter-spacing-widest: 0.1em;
+
+
+  /* --------------------------------------------------------------------------
+     3. SPACING, RADIUS, Z-INDEX, TRANSITIONS
+     -------------------------------------------------------------------------- */
+
+  --spacing-0: 0;
+  --spacing-px: 1px;
+  --spacing-0-5: 0.125rem;
+  --spacing-1: 0.25rem;
+  --spacing-1-5: 0.375rem;
+  --spacing-2: 0.5rem;
+  --spacing-3: 0.75rem;
+  --spacing-4: 1rem;
+  --spacing-5: 1.25rem;
+  --spacing-6: 1.5rem;
+  --spacing-8: 2rem;
+  --spacing-10: 2.5rem;
+  --spacing-12: 3rem;
+  --spacing-16: 4rem;
+  --spacing-20: 5rem;
+  --spacing-24: 6rem;
+
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
+  --radius-full: 9999px;
+
+  /* Layout — page-level max-widths */
+  --layout-xs: 28rem;     /* 448px — dialogs, small modals */
+  --layout-sm: 40rem;     /* 640px — settings, narrow forms */
+  --layout-md: 52rem;     /* 832px — single-column content (chat, conversations list) */
+  --layout-lg: 60rem;     /* 960px — template selectors, mid-width pages */
+  --layout-xl: 72rem;     /* 1152px — card grids (workspaces, workspace home) */
+  --layout-prompt: 40rem; /* prompt input boxes */
+
+  --transition-fast: 150ms ease;
+  --transition-base: 200ms ease;
+  --transition-slow: 300ms ease;
+
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-overlay: 300;
+  --z-modal: 400;
+  --z-popover: 500;
+  --z-tooltip: 600;
+}
+
+
+/* ==========================================================================
+   4. LIGHT THEME (default)
+
+   Surfaces: white + 2-3% brand blue
+   Borders: grey + 5% brand blue
+   Text: near-black with blue undertone
+   Shadows: rgba(0, 73, 118) — brand secondary hue
+   ========================================================================== */
+
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+
+  /* Surfaces */
+  --color-bg: #f4f7fb;
+  --color-surface: #fafbfe;
+  --color-surface-raised: #fdfeff;
+  --color-surface-sunken: #ecf0f7;
+  --color-surface-overlay: rgba(12, 22, 34, 0.4);
+
+  /* Borders */
+  --color-border: #d8e1ed;
+  --color-border-strong: #b8c6d8;
+  --color-border-subtle: #ebf0f7;
+
+  /* Text — near-black with brand-blue undertone */
+  --color-text: #0c1622;
+  --color-text-secondary: #3a4d62;
+  --color-text-muted: #738ba2;
+  --color-text-on-primary: #ffffff;
+  --color-text-on-dark: #e4ecf5;
+  --color-text-link: var(--color-brand-primary);
+  --color-text-link-hover: var(--color-brand-primary-700);
+
+  /* Shadows — brand-blue tinted, never pure black.
+     Every level includes the 0 0 0 1px hairline border per the design guide. */
+  --shadow-xs: 0 1px 2px rgba(0, 73, 118, 0.05);
+  --shadow-sm:
+    0 1px 3px rgba(0, 73, 118, 0.07),
+    0 0 0 1px rgba(0, 73, 118, 0.04);
+  --shadow-md:
+    0 4px 16px rgba(0, 73, 118, 0.09),
+    0 1px 4px rgba(0, 73, 118, 0.05),
+    0 0 0 1px rgba(0, 73, 118, 0.03);
+  --shadow-lg:
+    0 12px 40px rgba(0, 73, 118, 0.11),
+    0 2px 8px rgba(0, 73, 118, 0.05),
+    0 0 0 1px rgba(0, 73, 118, 0.03);
+  --shadow-xl:
+    0 24px 60px rgba(0, 73, 118, 0.14),
+    0 4px 12px rgba(0, 73, 118, 0.06),
+    0 0 0 1px rgba(0, 73, 118, 0.03);
+
+  /* Interactive States — brand-subtle overlays, never flat grey */
+  --color-hover: rgba(0, 146, 209, 0.06);
+  --color-active: rgba(0, 146, 209, 0.12);
+  --color-selected: rgba(0, 146, 209, 0.08);
+  --color-focus-ring: 0 0 0 3px rgba(0, 146, 209, 0.35);
+  --color-brand-subtle: #e8f3fb;
+  --color-highlight: rgba(245, 190, 11, 0.18);
+
+  /* Inputs */
+  --color-input-bg: var(--color-surface);
+  --color-input-border: var(--color-border);
+  --color-input-border-focus: var(--color-brand-primary);
+  --color-input-placeholder: var(--color-text-muted);
+
+  /* Code */
+  --color-code-bg: #eef3fa;
+  --color-code-text: var(--color-brand-secondary);
+
+  /* Scrollbar */
+  --color-scrollbar-track: var(--color-surface-sunken);
+  --color-scrollbar-thumb: var(--color-border-strong);
+
+  /* Star / favourite — amber that reads well on each surface */
+  --color-star: var(--color-brand-accent-yellow);
+
+  /* Status badges — light backgrounds */
+  --color-status-active-bg: var(--color-brand-success-100);
+  --color-status-active-text: var(--color-brand-success-darker);
+  --color-status-draft-bg: #fef3c7;
+  --color-status-draft-text: #92400e;
+  --color-status-closed-bg: #e0e4eb;
+  --color-status-closed-text: #5c6778;
+  --color-status-danger-bg: #fee2e2;
+  --color-status-danger-text: #991b1b;
+  --color-status-info-bg: var(--color-brand-primary-100);
+  --color-status-info-text: var(--color-brand-primary-800);
+}
+
+
+/* ==========================================================================
+   5. DARK THEME
+
+   Dark is never black — deep navy tinted with brand hue.
+   Shadows become subtle glows. Hairline borders use luminance.
+   ========================================================================== */
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Surfaces — deep navy, never pure black */
+  --color-bg: #0a1420;
+  --color-surface: #0f1c2c;
+  --color-surface-raised: #152638;
+  --color-surface-sunken: #070e18;
+  --color-surface-overlay: rgba(4, 8, 16, 0.7);
+
+  /* Borders — dark blue-grey */
+  --color-border: #1c2f46;
+  --color-border-strong: #2a4260;
+  --color-border-subtle: #132136;
+
+  /* Text — off-white, cool-leaning */
+  --color-text: #e2ebf5;
+  --color-text-secondary: #92aac4;
+  --color-text-muted: #5c7a96;
+  --color-text-on-primary: #ffffff;
+  --color-text-on-dark: #e2ebf5;
+  --color-text-link: var(--color-brand-primary-300);
+  --color-text-link-hover: var(--color-brand-primary-200);
+
+  /* Shadows — dark mode: depth uses brand-tinted navy (never pure black),
+     hairline border becomes a brand-hue luminance glow */
+  --shadow-xs: 0 0 0 1px rgba(0, 146, 209, 0.06);
+  --shadow-sm:
+    0 1px 4px rgba(5, 12, 24, 0.3),
+    0 0 0 1px rgba(0, 146, 209, 0.07);
+  --shadow-md:
+    0 4px 20px rgba(5, 12, 24, 0.4),
+    0 0 0 1px rgba(0, 146, 209, 0.06);
+  --shadow-lg:
+    0 12px 48px rgba(5, 12, 24, 0.5),
+    0 0 0 1px rgba(0, 146, 209, 0.08);
+  --shadow-xl:
+    0 24px 64px rgba(5, 12, 24, 0.6),
+    0 0 0 1px rgba(0, 146, 209, 0.10);
+
+  /* Interactive States */
+  --color-hover: rgba(0, 146, 209, 0.10);
+  --color-active: rgba(0, 146, 209, 0.18);
+  --color-selected: rgba(0, 146, 209, 0.14);
+  --color-focus-ring: 0 0 0 3px rgba(0, 146, 209, 0.45);
+  --color-brand-subtle: #0e2038;
+  --color-highlight: rgba(245, 190, 11, 0.24);
+
+  /* Inputs */
+  --color-input-bg: var(--color-surface-sunken);
+  --color-input-border: var(--color-border);
+  --color-input-border-focus: var(--color-brand-primary-400);
+  --color-input-placeholder: var(--color-text-muted);
+
+  /* Code */
+  --color-code-bg: #0d1824;
+  --color-code-text: var(--color-brand-primary-300);
+
+  /* Scrollbar */
+  --color-scrollbar-track: var(--color-surface-sunken);
+  --color-scrollbar-thumb: var(--color-border-strong);
+
+  /* Star — brighter amber for dark surfaces */
+  --color-star: var(--color-brand-accent-yellow-lighter);
+
+  /* Status badges — dark-adapted */
+  --color-status-active-bg: #0a3024;
+  --color-status-active-text: var(--color-brand-success-lighter);
+  --color-status-draft-bg: #49300a;
+  --color-status-draft-text: #fcd34d;
+  --color-status-closed-bg: #1a2433;
+  --color-status-closed-text: #8a9cb4;
+  --color-status-danger-bg: #4c1020;
+  --color-status-danger-text: #fca5a5;
+  --color-status-info-bg: #0a2640;
+  --color-status-info-text: var(--color-brand-primary-300);
+}
+
+
+/* ==========================================================================
+   6. GREY THEME
+
+   Neutral charcoal grey with a subtle brand-blue undertone.
+   Saturation is kept very low (~6-8%) so surfaces read as true grey,
+   not blue. Lightness sits at 10-22% — a dark neutral palette inspired
+   by classic dark-grey UI chrome.
+   Every value still carries a trace of the brand's cyan-blue hue.
+   ========================================================================== */
+
+[data-theme="grey"] {
+  color-scheme: dark;
+
+  /* Surfaces — neutral charcoal grey, subtle brand-blue undertone */
+  --color-bg: #1b1d21;
+  --color-surface: #26292e;
+  --color-surface-raised: #31353b;
+  --color-surface-sunken: #141618;
+  --color-surface-overlay: rgba(8, 12, 18, 0.6);
+
+  /* Borders — cool-grey, enough contrast on charcoal */
+  --color-border: #383c43;
+  --color-border-strong: #484e56;
+  --color-border-subtle: #2d3137;
+
+  /* Text — off-white with cool lean for readability on dark grey */
+  --color-text: #e6eaf0;
+  --color-text-secondary: #adb5c0;
+  --color-text-muted: #727b88;
+  --color-text-on-primary: #ffffff;
+  --color-text-on-dark: #e6eaf0;
+  --color-text-link: var(--color-brand-primary-300);
+  --color-text-link-hover: var(--color-brand-primary-200);
+
+  /* Shadows — brand-navy tinted depth, never pure black.
+     Hairline border carries brand-hue luminance. */
+  --shadow-xs: 0 1px 2px rgba(0, 18, 35, 0.20);
+  --shadow-sm:
+    0 1px 4px rgba(0, 18, 35, 0.25),
+    0 0 0 1px rgba(0, 92, 150, 0.08);
+  --shadow-md:
+    0 4px 16px rgba(0, 14, 30, 0.32),
+    0 1px 4px rgba(0, 18, 35, 0.15),
+    0 0 0 1px rgba(0, 92, 150, 0.07);
+  --shadow-lg:
+    0 12px 40px rgba(0, 12, 26, 0.38),
+    0 2px 8px rgba(0, 18, 35, 0.15),
+    0 0 0 1px rgba(0, 92, 150, 0.07);
+  --shadow-xl:
+    0 24px 60px rgba(0, 10, 22, 0.44),
+    0 4px 12px rgba(0, 18, 35, 0.18),
+    0 0 0 1px rgba(0, 92, 150, 0.08);
+
+  /* Interactive States — brand-subtle overlays */
+  --color-hover: rgba(0, 146, 209, 0.10);
+  --color-active: rgba(0, 146, 209, 0.18);
+  --color-selected: rgba(0, 146, 209, 0.14);
+  --color-focus-ring: 0 0 0 3px rgba(0, 146, 209, 0.45);
+  --color-brand-subtle: #152030;
+  --color-highlight: rgba(245, 190, 11, 0.24);
+
+  /* Inputs */
+  --color-input-bg: var(--color-surface-sunken);
+  --color-input-border: var(--color-border);
+  --color-input-border-focus: var(--color-brand-primary-400);
+  --color-input-placeholder: var(--color-text-muted);
+
+  /* Code */
+  --color-code-bg: #1e2126;
+  --color-code-text: var(--color-brand-primary-300);
+
+  /* Scrollbar */
+  --color-scrollbar-track: var(--color-surface-sunken);
+  --color-scrollbar-thumb: var(--color-border-strong);
+
+  /* Star — brighter amber for grey surfaces */
+  --color-star: var(--color-brand-accent-yellow-lighter);
+
+  /* Status badges — dark-grey adapted */
+  --color-status-active-bg: #0e3428;
+  --color-status-active-text: var(--color-brand-success-lighter);
+  --color-status-draft-bg: #49300a;
+  --color-status-draft-text: #fcd34d;
+  --color-status-closed-bg: #2a2e34;
+  --color-status-closed-text: #949ca8;
+  --color-status-danger-bg: #4c1020;
+  --color-status-danger-text: #fca5a5;
+  --color-status-info-bg: #0e2a40;
+  --color-status-info-text: var(--color-brand-primary-300);
+}
+
+
+/* ==========================================================================
+   7. AUTO DARK — Follows system preference when no [data-theme] is set
+   ========================================================================== */
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    color-scheme: dark;
+
+    --color-bg: #0a1420;
+    --color-surface: #0f1c2c;
+    --color-surface-raised: #152638;
+    --color-surface-sunken: #070e18;
+    --color-surface-overlay: rgba(4, 8, 16, 0.7);
+
+    --color-border: #1c2f46;
+    --color-border-strong: #2a4260;
+    --color-border-subtle: #132136;
+
+    --color-text: #e2ebf5;
+    --color-text-secondary: #92aac4;
+    --color-text-muted: #5c7a96;
+    --color-text-link: var(--color-brand-primary-300);
+    --color-text-link-hover: var(--color-brand-primary-200);
+
+    --shadow-xs: 0 0 0 1px rgba(0, 146, 209, 0.06);
+    --shadow-sm:
+      0 1px 4px rgba(5, 12, 24, 0.3),
+      0 0 0 1px rgba(0, 146, 209, 0.07);
+    --shadow-md:
+      0 4px 20px rgba(5, 12, 24, 0.4),
+      0 0 0 1px rgba(0, 146, 209, 0.06);
+    --shadow-lg:
+      0 12px 48px rgba(5, 12, 24, 0.5),
+      0 0 0 1px rgba(0, 146, 209, 0.08);
+    --shadow-xl:
+      0 24px 64px rgba(5, 12, 24, 0.6),
+      0 0 0 1px rgba(0, 146, 209, 0.10);
+
+    --color-hover: rgba(0, 146, 209, 0.10);
+    --color-active: rgba(0, 146, 209, 0.18);
+    --color-selected: rgba(0, 146, 209, 0.14);
+    --color-focus-ring: 0 0 0 3px rgba(0, 146, 209, 0.45);
+    --color-brand-subtle: #0e2038;
+    --color-highlight: rgba(245, 190, 11, 0.24);
+
+    --color-input-bg: var(--color-surface-sunken);
+    --color-input-border: var(--color-border);
+    --color-input-border-focus: var(--color-brand-primary-400);
+    --color-input-placeholder: var(--color-text-muted);
+
+    --color-code-bg: #0d1824;
+    --color-code-text: var(--color-brand-primary-300);
+
+    --color-scrollbar-track: var(--color-surface-sunken);
+    --color-scrollbar-thumb: var(--color-border-strong);
+
+    --color-star: var(--color-brand-accent-yellow-lighter);
+
+    --color-status-active-bg: #0a3024;
+    --color-status-active-text: var(--color-brand-success-lighter);
+    --color-status-draft-bg: #49300a;
+    --color-status-draft-text: #fcd34d;
+    --color-status-closed-bg: #1a2433;
+    --color-status-closed-text: #8a9cb4;
+    --color-status-danger-bg: #4c1020;
+    --color-status-danger-text: #fca5a5;
+    --color-status-info-bg: #0a2640;
+    --color-status-info-text: var(--color-brand-primary-300);
+  }
+}
