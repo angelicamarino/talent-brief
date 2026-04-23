@@ -544,8 +544,10 @@ function buildEmailBody(v) {
 
   ${sectionsHTML}
 
-  <!-- FOOTER -->
-  <tr><td style="padding-top:32px;padding-bottom:8px;border-top:1px solid #DDE3EA;margin-top:32px;">
+  <!-- FOOTER spacer -->
+  <tr><td style="padding-top:36px;font-size:0;line-height:0;height:0;border-bottom:1px solid #DDE3EA;">&nbsp;</td></tr>
+  <!-- FOOTER content -->
+  <tr><td style="padding-top:16px;padding-bottom:8px;">
     ${v.footer.line1 ? `<p style="margin:0 0 4px 0;font-size:12px;color:#97999B;font-family:system-ui,-apple-system,sans-serif;">${esc(v.footer.line1)}</p>` : ''}
     ${v.footer.line2 ? `<p style="margin:0 0 4px 0;font-size:12px;color:#97999B;font-family:system-ui,-apple-system,sans-serif;">${esc(v.footer.line2)}</p>` : ''}
     ${v.footer.line3 ? `<p style="margin:0 0 4px 0;font-size:12px;color:#97999B;font-family:system-ui,-apple-system,sans-serif;">${esc(v.footer.line3)}</p>` : ''}
