@@ -12,6 +12,7 @@ const SECTION_TYPES = {
   highlight: 'Highlight box',
   items:     'Update items',
   card:      'Featured card',
+  image:     'Image',
 };
 
 /* ── State ── */
@@ -310,6 +311,18 @@ function buildSectionContent(sec) {
       </select>
     </div>
   </div>`;
+
+    case 'image': return `
+  <div class="field" style="margin-bottom:0">
+    <label>Image</label>
+    ${sec.image ? `<div class="img-wrap"><img class="img-preview" src="${sec.image}"><button class="btn-remove-img" onclick="removeSectionImage(${sec.id})" title="Remove image">&#x2715;</button></div>` : ''}
+    <div style="display:flex;gap:8px;align-items:center;margin-top:4px;">
+      <input type="file" accept="image/*" onchange="handleSectionImage(${sec.id},this)" style="font-size:12px;flex:1;min-width:0;">
+      <select id="sec-imgsize-${sec.id}" onchange="setSectionImageSize(${sec.id},this.value)" style="width:auto;padding:4px 6px;font-size:12px;">
+        ${Object.entries(IMG_SIZES).map(([v,l]) => `<option value="${v}" ${sec.imageSize === v ? 'selected' : ''}>${l}</option>`).join('')}
+      </select>
+    </div>
+  </div>`;
   }
   return '';
 }
@@ -468,6 +481,18 @@ function buildSectionEmail(sec, pStyle, emptyP) {
         ${cardInner}
       </td>
     </tr></table>
+  </td></tr>`;
+    }
+
+    case 'image': {
+      const imgHTML = sec.image
+        ? `<img src="${sec.image}" width="${sec.imageSize}" style="display:block;border-radius:4px;width:${sec.imageSize}px;height:auto;">`
+        : `<p style="margin:0;font-size:14px;line-height:1.7;color:#97999B;font-style:italic;font-family:system-ui,-apple-system,sans-serif;">No image uploaded.</p>`;
+
+      return `
+  <tr><td style="padding-top:24px;padding-bottom:4px;">
+    ${headingHTML}${subtitleHTML}
+    ${imgHTML}
   </td></tr>`;
     }
   }
