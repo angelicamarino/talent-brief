@@ -5,14 +5,22 @@ const CATS = {
   behavior: { label: 'Behavior change', color: '#004976' },
 };
 
-/* ── State ── */
-let items  = [];
-let nextId = 0;
-let LOGO_B64 = '';
-let workspaceImage = '';
-let workspaceImageSize = '160';
-
 const IMG_SIZES = { '100': 'Small', '160': 'Medium', '240': 'Large' };
+const EMOJI_OPTIONS = ['✅','🆕','🔧','📢','⚡','🚀','🎯','💡','📌','📋','⭐','🔔','🎉','⚠️'];
+
+const SECTION_TYPES = {
+  highlight: 'Highlight box',
+  items:     'Update items',
+  card:      'Featured card',
+};
+
+/* ── State ── */
+let sections = [];
+let nextSectionId = 0;
+let nextItemId = 0;
+let LOGO_B64 = '';
+let lastRemoved = null;
+let undoTimeout = null;
 
 /* ── Helpers ── */
 function esc(s) {
@@ -43,149 +51,349 @@ function buildLogoHeader() {
   return `<h1 style="margin:0 0 5px 0;font-size:22px;font-weight:500;color:#0092D1;line-height:1.2;font-family:system-ui,-apple-system,sans-serif;text-align:right;">Talent+ &mdash; A Brief</h1>`;
 }
 
+function newSection(type) {
+  return {
+    id: nextSectionId++, type: type || 'highlight',
+    heading: '', subtitle: '', body: '', badge: '',
+    image: '', imageSize: '160', items: [],
+  };
+}
+
+/* ── Section management ── */
+function addSection(type) {
+  syncAllSections();
+  sections.push(newSection(type));
+  rebuildSections();
+  render();
+}
+
+function removeSection(id) {
+  syncAllSections();
+  const idx = sections.findIndex(s => s.id === id);
+  if (idx === -1) return;
+  lastRemoved = { type: 'section', data: sections[idx], index: idx };
+  sections.splice(idx, 1);
+  rebuildSections();
+  render();
+  showUndoToast('Section removed');
+}
+
+function moveSection(id, dir) {
+  syncAllSections();
+  const idx = sections.findIndex(s => s.id === id);
+  if (idx === -1) return;
+  const target = idx + dir;
+  if (target < 0 || target >= sections.length) return;
+  [sections[idx], sections[target]] = [sections[target], sections[idx]];
+  rebuildSections();
+  render();
+}
+
+function setSectionType(id, type) {
+  syncAllSections();
+  const sec = sections.find(s => s.id === id);
+  if (!sec) return;
+  sec.type = type;
+  rebuildSections();
+  render();
+}
+
+function syncSection(id) {
+  const sec = sections.find(s => s.id === id);
+  if (!sec) return;
+  sec.heading  = document.getElementById(`sec-heading-${id}`)?.value ?? sec.heading;
+  sec.subtitle = document.getElementById(`sec-sub-${id}`)?.value ?? sec.subtitle;
+  sec.body     = document.getElementById(`sec-body-${id}`)?.value ?? sec.body;
+  sec.badge    = document.getElementById(`sec-badge-${id}`)?.value ?? sec.badge;
+  render();
+}
+
+function syncAllSections() {
+  sections.forEach(sec => {
+    sec.heading  = document.getElementById(`sec-heading-${sec.id}`)?.value ?? sec.heading;
+    sec.subtitle = document.getElementById(`sec-sub-${sec.id}`)?.value ?? sec.subtitle;
+    sec.body     = document.getElementById(`sec-body-${sec.id}`)?.value ?? sec.body;
+    sec.badge    = document.getElementById(`sec-badge-${sec.id}`)?.value ?? sec.badge;
+    sec.items.forEach(item => {
+      item.category    = document.getElementById(`it-cat-${item.id}`)?.value ?? item.category;
+      item.title       = document.getElementById(`it-title-${item.id}`)?.value ?? item.title;
+      item.description = document.getElementById(`it-desc-${item.id}`)?.value ?? item.description;
+      item.imageSize   = document.getElementById(`it-imgsize-${item.id}`)?.value ?? item.imageSize;
+    });
+  });
+}
+
+/* ── Section image handling ── */
+function handleSectionImage(id, input) {
+  const file = input.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const sec = sections.find(s => s.id === id);
+    if (sec) { sec.image = reader.result; syncAllSections(); rebuildSections(); render(); }
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeSectionImage(id) {
+  const sec = sections.find(s => s.id === id);
+  if (sec) { sec.image = ''; syncAllSections(); rebuildSections(); render(); }
+}
+
+function setSectionImageSize(id, size) {
+  const sec = sections.find(s => s.id === id);
+  if (sec) { sec.imageSize = size; render(); }
+}
+
 /* ── Item management ── */
-function addItem() {
-  const id = nextId++;
-  items.push({ id, category: 'system', title: '', description: '', image: '', imageSize: '160' });
-  rebuildForms();
+function addItem(sectionId) {
+  syncAllSections();
+  const sec = sections.find(s => s.id === sectionId);
+  if (!sec) return;
+  const id = nextItemId++;
+  sec.items.push({ id, category: 'system', icon: 'dot', title: '', description: '', image: '', imageSize: '160' });
+  rebuildSections();
   render();
   requestAnimationFrame(() => document.getElementById(`it-title-${id}`)?.focus());
 }
 
-function removeItem(id) {
-  items = items.filter(i => i.id !== id);
-  rebuildForms();
+function removeItem(sectionId, itemId) {
+  syncAllSections();
+  const sec = sections.find(s => s.id === sectionId);
+  if (!sec) return;
+  const idx = sec.items.findIndex(i => i.id === itemId);
+  if (idx === -1) return;
+  lastRemoved = { type: 'item', sectionId, data: sec.items[idx], index: idx };
+  sec.items.splice(idx, 1);
+  rebuildSections();
   render();
+  showUndoToast('Item removed');
 }
 
-function syncItem(id) {
-  const item = items.find(i => i.id === id);
+function syncItem(sectionId, itemId) {
+  const sec = sections.find(s => s.id === sectionId);
+  if (!sec) return;
+  const item = sec.items.find(i => i.id === itemId);
   if (!item) return;
-  item.category    = document.getElementById(`it-cat-${id}`)?.value      ?? item.category;
-  item.title       = document.getElementById(`it-title-${id}`)?.value    ?? item.title;
-  item.description = document.getElementById(`it-desc-${id}`)?.value     ?? item.description;
-  item.imageSize   = document.getElementById(`it-imgsize-${id}`)?.value  ?? item.imageSize;
-  const card = document.getElementById(`icard-${id}`);
+  item.category    = document.getElementById(`it-cat-${itemId}`)?.value ?? item.category;
+  item.title       = document.getElementById(`it-title-${itemId}`)?.value ?? item.title;
+  item.description = document.getElementById(`it-desc-${itemId}`)?.value ?? item.description;
+  item.imageSize   = document.getElementById(`it-imgsize-${itemId}`)?.value ?? item.imageSize;
+  const card = document.getElementById(`icard-${itemId}`);
   if (card) card.style.setProperty('--dot', CATS[item.category]?.color ?? '#0092D1');
   render();
 }
 
-function handleItemImage(id, input) {
-  const file = input.files?.[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    const item = items.find(i => i.id === id);
-    if (item) { item.image = reader.result; rebuildForms(); render(); }
-  };
-  reader.readAsDataURL(file);
-}
-
-function removeItemImage(id) {
-  const item = items.find(i => i.id === id);
-  if (item) { item.image = ''; rebuildForms(); render(); }
-}
-
-function handleWorkspaceImage(input) {
-  const file = input.files?.[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    workspaceImage = reader.result;
-    render();
-    updateWorkspacePreview();
-  };
-  reader.readAsDataURL(file);
-}
-
-function removeWorkspaceImage() {
-  workspaceImage = '';
+function setItemIcon(sectionId, itemId, icon) {
+  syncAllSections();
+  const sec = sections.find(s => s.id === sectionId);
+  if (!sec) return;
+  const item = sec.items.find(i => i.id === itemId);
+  if (!item) return;
+  item.icon = icon;
+  rebuildSections();
   render();
-  updateWorkspacePreview();
 }
 
-function updateWorkspacePreview() {
-  const el = document.getElementById('ws-img-preview');
-  if (!el) return;
-  el.innerHTML = workspaceImage
-    ? `<div class="img-wrap"><img class="img-preview" src="${workspaceImage}"><button class="btn-remove-img" onclick="removeWorkspaceImage()" title="Remove image">&#x2715;</button></div>`
-    : '';
+function handleItemImage(sectionId, itemId, input) {
+  const file = input.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const sec = sections.find(s => s.id === sectionId);
+    const item = sec?.items.find(i => i.id === itemId);
+    if (item) { item.image = reader.result; syncAllSections(); rebuildSections(); render(); }
+  };
+  reader.readAsDataURL(file);
 }
 
-function rebuildForms() {
-  document.getElementById('items-container').innerHTML = items.map((item, idx) => {
-    const dot = CATS[item.category]?.color ?? '#0092D1';
-    return `<div class="item-card" id="icard-${item.id}" style="--dot:${dot}">
+function removeItemImage(sectionId, itemId) {
+  syncAllSections();
+  const sec = sections.find(s => s.id === sectionId);
+  const item = sec?.items.find(i => i.id === itemId);
+  if (item) { item.image = ''; rebuildSections(); render(); }
+}
+
+/* ── Undo ── */
+function undoRemove() {
+  if (!lastRemoved) return;
+  if (lastRemoved.type === 'section') {
+    sections.splice(lastRemoved.index, 0, lastRemoved.data);
+  } else if (lastRemoved.type === 'item') {
+    const sec = sections.find(s => s.id === lastRemoved.sectionId);
+    if (sec) sec.items.splice(lastRemoved.index, 0, lastRemoved.data);
+  }
+  lastRemoved = null;
+  hideUndoToast();
+  rebuildSections();
+  render();
+}
+
+function showUndoToast(msg) {
+  clearTimeout(undoTimeout);
+  const t = document.getElementById('undo-toast');
+  t.querySelector('span').textContent = msg || 'Removed';
+  t.classList.add('show');
+  undoTimeout = setTimeout(hideUndoToast, 5000);
+}
+
+function hideUndoToast() {
+  clearTimeout(undoTimeout);
+  document.getElementById('undo-toast').classList.remove('show');
+  lastRemoved = null;
+}
+
+/* ── Form building ── */
+function rebuildSections() {
+  document.getElementById('sections-container').innerHTML = sections.map((sec, idx) => {
+    const isFirst = idx === 0;
+    const isLast  = idx === sections.length - 1;
+
+    return `<div class="section-block">
+  <div class="section-header">
+    <span>Section ${idx + 1}</span>
+    <div class="section-actions">
+      ${!isFirst ? `<button class="btn-section-action" onclick="moveSection(${sec.id},-1)" title="Move up">&#9650;</button>` : ''}
+      ${!isLast  ? `<button class="btn-section-action" onclick="moveSection(${sec.id},1)" title="Move down">&#9660;</button>` : ''}
+      <button class="btn-remove" onclick="removeSection(${sec.id})" title="Remove section">&#x2715;</button>
+    </div>
+  </div>
+  <div class="field">
+    <label>Type</label>
+    <select onchange="setSectionType(${sec.id},this.value)">
+      ${Object.entries(SECTION_TYPES).map(([k,v]) => `<option value="${k}" ${sec.type === k ? 'selected' : ''}>${v}</option>`).join('')}
+    </select>
+  </div>
+  <div class="field-row" style="grid-template-columns:1fr 1fr;">
+    <div class="field">
+      <label>Heading</label>
+      <input type="text" id="sec-heading-${sec.id}" value="${esc(sec.heading)}" placeholder="Optional heading" oninput="syncSection(${sec.id})">
+    </div>
+    <div class="field">
+      <label>Subtitle</label>
+      <input type="text" id="sec-sub-${sec.id}" value="${esc(sec.subtitle)}" placeholder="Optional subtitle" oninput="syncSection(${sec.id})">
+    </div>
+  </div>
+  ${buildSectionContent(sec)}
+</div>`;
+  }).join('');
+}
+
+function buildSectionContent(sec) {
+  switch (sec.type) {
+    case 'highlight': return `
+  <div class="field">
+    <label>Paragraph</label>
+    <textarea id="sec-body-${sec.id}" rows="4" placeholder="Write content for this section..." oninput="syncSection(${sec.id})">${esc(sec.body)}</textarea>
+  </div>`;
+
+    case 'items': return `
+  <div class="items-container">${sec.items.map((item, i) => buildItemCard(sec, item, i)).join('')}</div>
+  <button class="btn-add" onclick="addItem(${sec.id})">+ Add update item</button>`;
+
+    case 'card': return `
+  <div class="field">
+    <label>Badge text</label>
+    <input type="text" id="sec-badge-${sec.id}" value="${esc(sec.badge)}" placeholder="e.g. Coming soon" oninput="syncSection(${sec.id})">
+  </div>
+  <div class="field">
+    <label>Paragraph</label>
+    <textarea id="sec-body-${sec.id}" rows="4" placeholder="Write content for this card..." oninput="syncSection(${sec.id})">${esc(sec.body)}</textarea>
+  </div>
+  <div class="field" style="margin-bottom:0">
+    <label>Image (optional)</label>
+    ${sec.image ? `<div class="img-wrap"><img class="img-preview" src="${sec.image}"><button class="btn-remove-img" onclick="removeSectionImage(${sec.id})" title="Remove image">&#x2715;</button></div>` : ''}
+    <div style="display:flex;gap:8px;align-items:center;margin-top:4px;">
+      <input type="file" accept="image/*" onchange="handleSectionImage(${sec.id},this)" style="font-size:12px;flex:1;min-width:0;">
+      <select id="sec-imgsize-${sec.id}" onchange="setSectionImageSize(${sec.id},this.value)" style="width:auto;padding:4px 6px;font-size:12px;">
+        ${Object.entries(IMG_SIZES).map(([v,l]) => `<option value="${v}" ${sec.imageSize === v ? 'selected' : ''}>${l}</option>`).join('')}
+      </select>
+    </div>
+  </div>`;
+  }
+  return '';
+}
+
+function buildItemCard(sec, item, idx) {
+  const dot = CATS[item.category]?.color ?? '#0092D1';
+  return `<div class="item-card" id="icard-${item.id}" style="--dot:${dot}">
   <div class="item-header">
     <span class="item-num">Item ${idx + 1}</span>
-    <button class="btn-remove" onclick="removeItem(${item.id})" title="Remove item">&#x2715;</button>
+    <button class="btn-remove" onclick="removeItem(${sec.id},${item.id})" title="Remove item">&#x2715;</button>
   </div>
   <div class="field">
     <label for="it-cat-${item.id}">Category</label>
-    <select id="it-cat-${item.id}" onchange="syncItem(${item.id})">
-      <option value="system"   ${item.category === 'system'   ? 'selected' : ''}>System change</option>
-      <option value="process"  ${item.category === 'process'  ? 'selected' : ''}>Process change</option>
+    <select id="it-cat-${item.id}" onchange="syncItem(${sec.id},${item.id})">
+      <option value="system" ${item.category === 'system' ? 'selected' : ''}>System change</option>
+      <option value="process" ${item.category === 'process' ? 'selected' : ''}>Process change</option>
       <option value="behavior" ${item.category === 'behavior' ? 'selected' : ''}>Behavior change</option>
     </select>
+  </div>
+  <div class="field">
+    <label>Icon</label>
+    <div class="icon-picker">
+      <button type="button" class="icon-opt${item.icon === 'dot' ? ' selected' : ''}" onclick="setItemIcon(${sec.id},${item.id},'dot')" title="Category dot">
+        <span class="icon-dot" style="background:${dot};"></span>
+      </button>
+      <button type="button" class="icon-opt${item.icon === 'none' ? ' selected' : ''}" onclick="setItemIcon(${sec.id},${item.id},'none')" title="No icon">
+        <span class="icon-none">&mdash;</span>
+      </button>
+      ${EMOJI_OPTIONS.map(e => `<button type="button" class="icon-opt${item.icon === e ? ' selected' : ''}" onclick="setItemIcon(${sec.id},${item.id},'${e}')" title="${e}">${e}</button>`).join('')}
+    </div>
   </div>
   <div class="field">
     <label for="it-title-${item.id}">Title</label>
     <input type="text" id="it-title-${item.id}" value="${esc(item.title)}"
       placeholder="e.g. Reference checks now in Talent+"
-      oninput="syncItem(${item.id})">
+      oninput="syncItem(${sec.id},${item.id})">
   </div>
   <div class="field">
     <label for="it-desc-${item.id}">Description</label>
     <textarea id="it-desc-${item.id}" rows="2"
       placeholder="One sentence explaining what changed and why it matters."
-      oninput="syncItem(${item.id})">${esc(item.description)}</textarea>
+      oninput="syncItem(${sec.id},${item.id})">${esc(item.description)}</textarea>
   </div>
   <div class="field" style="margin-bottom:0">
     <label>Image (optional)</label>
     ${item.image
-      ? `<div class="img-wrap"><img class="img-preview" src="${item.image}"><button class="btn-remove-img" onclick="removeItemImage(${item.id})" title="Remove image">&#x2715;</button></div>`
+      ? `<div class="img-wrap"><img class="img-preview" src="${item.image}"><button class="btn-remove-img" onclick="removeItemImage(${sec.id},${item.id})" title="Remove image">&#x2715;</button></div>`
       : ''}
     <div style="display:flex;gap:8px;align-items:center;margin-top:4px;">
-      <input type="file" accept="image/*" onchange="handleItemImage(${item.id}, this)" style="font-size:12px;flex:1;min-width:0;">
-      <select id="it-imgsize-${item.id}" onchange="syncItem(${item.id})" style="width:auto;padding:4px 6px;font-size:12px;">
+      <input type="file" accept="image/*" onchange="handleItemImage(${sec.id},${item.id},this)" style="font-size:12px;flex:1;min-width:0;">
+      <select id="it-imgsize-${item.id}" onchange="syncItem(${sec.id},${item.id})" style="width:auto;padding:4px 6px;font-size:12px;">
         ${Object.entries(IMG_SIZES).map(([v,l]) => `<option value="${v}" ${item.imageSize === v ? 'selected' : ''}>${l}</option>`).join('')}
       </select>
     </div>
   </div>
 </div>`;
-  }).join('');
 }
 
 /* ── Read form values ── */
 function vals() {
   return {
-    issue:     (document.getElementById('f-issue')?.value     || '1').trim(),
-    month:     (document.getElementById('f-month')?.value     || 'April 2026').trim(),
-    intro:      document.getElementById('f-intro')?.value     || '',
-    badge:     (document.getElementById('f-badge')?.value     || 'Kicked off April 2026').trim(),
-    workspace:  document.getElementById('f-workspace')?.value || '',
-    workspaceImage: workspaceImage,
-    workspaceImageSize: workspaceImageSize,
-    items: items.map(item => ({
-      category:    item.category,
-      title:       document.getElementById(`it-title-${item.id}`)?.value ?? item.title,
-      description: document.getElementById(`it-desc-${item.id}`)?.value  ?? item.description,
-      image:       item.image || '',
-      imageSize:   item.imageSize || '160',
-    })),
+    issue: (document.getElementById('f-issue')?.value || '1').trim(),
+    month: (document.getElementById('f-month')?.value || 'April 2026').trim(),
+    sections,
   };
 }
 
 /* ── Email HTML builders ── */
-function buildItems(itemsData) {
+function buildItemRows(itemsData) {
   if (!itemsData.length) {
     return `<tr><td style="padding:16px 0;font-size:13px;color:#97999B;font-style:italic;font-family:system-ui,-apple-system,sans-serif;">No update items added yet.</td></tr>`;
   }
   return itemsData.map(item => {
+    let iconHTML = '';
+    if (item.icon === 'dot') {
+      const catColor = CATS[item.category]?.color ?? '#0092D1';
+      iconHTML = `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${catColor};margin-right:6px;vertical-align:middle;"></span>`;
+    } else if (item.icon && item.icon !== 'none') {
+      iconHTML = `<span style="margin-right:4px;font-size:13px;vertical-align:middle;">${item.icon}</span>`;
+    }
     const title = esc(item.title)       || '<em style="color:#97999B;">Untitled</em>';
     const desc  = esc(item.description) || '';
     const textHTML = `
-      <p style="margin:0 0 3px 0;font-size:14px;font-weight:600;color:#0D1E2F;line-height:1.4;">${title}</p>
+      <p style="margin:0 0 3px 0;font-size:14px;font-weight:600;color:#0D1E2F;line-height:1.4;">${iconHTML}${title}</p>
       ${desc ? `<p style="margin:0;font-size:14px;font-weight:400;color:#00070A;line-height:1.7;">${desc}</p>` : ''}`;
 
     if (item.image) {
@@ -208,12 +416,69 @@ function buildItems(itemsData) {
   }).join('\n');
 }
 
-function buildEmailBody(v) {
-  const pStyle  = 'margin:0 0 8px 0;font-size:14px;line-height:1.7;color:#00070A;font-family:system-ui,-apple-system,sans-serif;';
-  const emptyP  = `<p style="margin:0;font-size:14px;line-height:1.7;color:#97999B;font-style:italic;font-family:system-ui,-apple-system,sans-serif;">—</p>`;
+function buildSectionEmail(sec, pStyle, emptyP) {
+  const h2Style = 'margin:0 0 4px 0;font-size:18px;font-weight:600;color:#0092D1;font-family:system-ui,-apple-system,sans-serif;';
+  const subStyle = 'margin:0 0 16px 0;font-size:13px;color:#97999B;line-height:1.5;font-family:system-ui,-apple-system,sans-serif;';
+  const headingHTML  = sec.heading  ? `<h2 style="${h2Style}">${esc(sec.heading)}</h2>` : '';
+  const subtitleHTML = sec.subtitle ? `<p style="${subStyle}">${esc(sec.subtitle)}</p>` : '';
 
-  const introHTML     = nl2p(v.intro,     pStyle) || emptyP;
-  const workspaceHTML = nl2p(v.workspace, pStyle) || emptyP;
+  switch (sec.type) {
+    case 'highlight': {
+      const bodyHTML = nl2p(sec.body, pStyle) || emptyP;
+      return `
+  <tr><td style="padding-top:24px;padding-bottom:4px;">
+    ${headingHTML}${subtitleHTML}
+    <table cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
+      <td style="background:#F6F9FC;border-radius:8px;padding:16px 20px;">
+        ${bodyHTML}
+      </td>
+    </tr></table>
+  </td></tr>`;
+    }
+
+    case 'items': {
+      return `
+  <tr><td style="padding-top:32px;">
+    ${headingHTML}${subtitleHTML}
+    <table cellpadding="0" cellspacing="0" border="0" width="100%">
+      ${buildItemRows(sec.items || [])}
+    </table>
+  </td></tr>`;
+    }
+
+    case 'card': {
+      const bodyHTML = nl2p(sec.body, pStyle) || emptyP;
+      const badgeHTML = sec.badge
+        ? `<p style="margin:0 0 12px 0;"><span style="display:inline-block;background:#4EC3E0;color:#004976;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;padding:3px 10px;border-radius:100px;font-family:system-ui,-apple-system,sans-serif;">${esc(sec.badge)}</span></p>`
+        : '';
+      const cardInner = sec.image
+        ? `<table cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
+            <td style="vertical-align:top;">${badgeHTML}${bodyHTML}</td>
+            <td width="${sec.imageSize}" style="vertical-align:top;padding-left:16px;">
+              <img src="${sec.image}" width="${sec.imageSize}" style="display:block;border-radius:4px;width:${sec.imageSize}px;height:auto;">
+            </td>
+          </tr></table>`
+        : `${badgeHTML}${bodyHTML}`;
+
+      return `
+  <tr><td style="padding-top:36px;">
+    ${headingHTML}${subtitleHTML}
+    <table cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
+      <td style="background:#F5FBFD;border-radius:8px;padding:16px 20px;border:1px solid #C8D8E4;">
+        ${cardInner}
+      </td>
+    </tr></table>
+  </td></tr>`;
+    }
+  }
+  return '';
+}
+
+function buildEmailBody(v) {
+  const pStyle = 'margin:0 0 8px 0;font-size:14px;line-height:1.7;color:#00070A;font-family:system-ui,-apple-system,sans-serif;';
+  const emptyP = `<p style="margin:0;font-size:14px;line-height:1.7;color:#97999B;font-style:italic;font-family:system-ui,-apple-system,sans-serif;">—</p>`;
+
+  const sectionsHTML = v.sections.map(sec => buildSectionEmail(sec, pStyle, emptyP)).join('\n');
 
   return `<table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#FFFFFF;">
 <tr><td align="center" style="padding:32px 16px;">
@@ -232,50 +497,7 @@ function buildEmailBody(v) {
     </tr></table>
   </td></tr>
 
-  <!-- INTRO -->
-  <tr><td style="padding-top:24px;padding-bottom:4px;">
-    <table cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
-      <td style="background:#F6F9FC;border-radius:8px;padding:16px 20px;">
-        ${introHTML}
-      </td>
-    </tr></table>
-  </td></tr>
-
-  <!-- TALENT+ UPDATES -->
-  <tr><td style="padding-top:32px;">
-    <h2 style="margin:0 0 4px 0;font-size:18px;font-weight:600;color:#0092D1;font-family:system-ui,-apple-system,sans-serif;">Talent+ Updates</h2>
-    <p style="margin:0 0 16px 0;font-size:13px;color:#97999B;line-height:1.5;font-family:system-ui,-apple-system,sans-serif;">Changes made this month</p>
-
-    <!-- Items -->
-    <table cellpadding="0" cellspacing="0" border="0" width="100%">
-      ${buildItems(v.items)}
-    </table>
-  </td></tr>
-
-  <!-- PEOPLE – TALENT WORKSPACE -->
-  <tr><td style="padding-top:36px;">
-    <h2 style="margin:0 0 4px 0;font-size:18px;font-weight:600;color:#0092D1;font-family:system-ui,-apple-system,sans-serif;">People &ndash; Talent Workspace</h2>
-    <p style="margin:0 0 16px 0;font-size:13px;color:#97999B;line-height:1.5;font-family:system-ui,-apple-system,sans-serif;">A new platform from the HR PID Team</p>
-    <table cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
-      <td style="background:#F5FBFD;border-radius:8px;padding:16px 20px;border:1px solid #C8D8E4;">${v.workspaceImage ? `
-        <table cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
-          <td style="vertical-align:top;">
-            <p style="margin:0 0 12px 0;">
-              <span style="display:inline-block;background:#4EC3E0;color:#004976;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;padding:3px 10px;border-radius:100px;font-family:system-ui,-apple-system,sans-serif;">${esc(v.badge)}</span>
-            </p>
-            ${workspaceHTML}
-          </td>
-          <td width="${v.workspaceImageSize}" style="vertical-align:top;padding-left:16px;">
-            <img src="${v.workspaceImage}" width="${v.workspaceImageSize}" style="display:block;border-radius:4px;width:${v.workspaceImageSize}px;height:auto;">
-          </td>
-        </tr></table>` : `
-        <p style="margin:0 0 12px 0;">
-          <span style="display:inline-block;background:#4EC3E0;color:#004976;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;padding:3px 10px;border-radius:100px;font-family:system-ui,-apple-system,sans-serif;">${esc(v.badge)}</span>
-        </p>
-        ${workspaceHTML}`}
-      </td>
-    </tr></table>
-  </td></tr>
+  ${sectionsHTML}
 
   <!-- FOOTER -->
   <tr><td style="padding-top:32px;padding-bottom:8px;border-top:1px solid #DDE3EA;margin-top:32px;">
@@ -305,9 +527,11 @@ ${buildEmailBody(v)}
 /* ── Render & Copy ── */
 function render() {
   document.getElementById('email-preview').innerHTML = buildEmailBody(vals());
+  updatePreviewScale();
 }
 
 function copyForGmail() {
+  syncAllSections();
   const html = buildEmailBody(vals());
   const blob = new Blob([html], { type: 'text/html' });
   const textBlob = new Blob([html], { type: 'text/plain' });
@@ -334,6 +558,7 @@ function fallbackRichCopy(html) {
 }
 
 function copyHTML() {
+  syncAllSections();
   const html = buildFullHTML(vals());
   if (navigator.clipboard?.writeText) {
     navigator.clipboard.writeText(html).then(showToast).catch(() => fallbackCopy(html));
@@ -360,25 +585,43 @@ function showToast() {
 }
 
 /* ── Init ── */
-document.getElementById('f-intro').value =
-  `Welcome to the first issue of Talent+: A Brief — a monthly newsletter from the HR PID Team keeping you up to date on everything happening in Talent+ and the broader People technology space.\n\nIf this is useful to you, please share it with colleagues who should be on the list.`;
+const s0 = newSection('highlight');
+s0.body = `Welcome to the first issue of Talent+: A Brief — a monthly newsletter from the HR PID Team keeping you up to date on everything happening in Talent+ and the broader People technology space.\n\nIf this is useful to you, please share it with colleagues who should be on the list.`;
+sections.push(s0);
 
-document.getElementById('f-workspace').value =
-  `The HR PID Team has just kicked off the People – Talent Workspace, a new platform designed to bring all HR processes and tools into one place for everyone at UNOPS.\n\nThis project is the next step in the People technology journey, building on the foundation laid by Talent+. Work began in April 2026 and we will keep you updated here each month as it progresses.`;
+const s1 = newSection('items');
+s1.heading = 'Talent+ Updates';
+s1.subtitle = 'Changes made this month';
+s1.items.push({
+  id: nextItemId++, category: 'system', icon: 'dot',
+  title: 'Reference checks now in Talent+',
+  description: 'Reference checks can now be initiated and tracked directly within Talent+, reducing the need to manage this step outside the system.',
+  image: '', imageSize: '160',
+});
+sections.push(s1);
 
-addItem();
-setTimeout(() => {
-  const first = items[0];
-  if (!first) return;
-  const titleEl = document.getElementById(`it-title-${first.id}`);
-  const descEl  = document.getElementById(`it-desc-${first.id}`);
-  if (titleEl) titleEl.value = 'Reference checks now in Talent+';
-  if (descEl)  descEl.value  = 'Reference checks can now be initiated and tracked directly within Talent+, reducing the need to manage this step outside the system.';
-  syncItem(first.id);
-}, 10);
+const s2 = newSection('card');
+s2.heading = 'People – Talent Workspace';
+s2.subtitle = 'A new platform from the HR PID Team';
+s2.badge = 'Kicked off April 2026';
+s2.body = `The HR PID Team has just kicked off the People – Talent Workspace, a new platform designed to bring all HR processes and tools into one place for everyone at UNOPS.\n\nThis project is the next step in the People technology journey, building on the foundation laid by Talent+. Work began in April 2026 and we will keep you updated here each month as it progresses.`;
+sections.push(s2);
 
+rebuildSections();
 render();
 
 fetch('assets/logo/black_logo_b64.txt')
   .then(r => r.text())
   .then(data => { LOGO_B64 = data.trim(); render(); });
+
+/* ── Preview scaling ── */
+function updatePreviewScale() {
+  const panel = document.querySelector('.preview-panel');
+  const shell = document.querySelector('.preview-shell');
+  if (!panel || !shell) return;
+  const available = panel.clientWidth - 48;
+  const scale = Math.min(1, available / 700);
+  shell.style.zoom = scale < 1 ? scale : '';
+}
+
+new ResizeObserver(updatePreviewScale).observe(document.querySelector('.preview-panel'));
