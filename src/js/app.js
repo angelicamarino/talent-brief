@@ -23,6 +23,15 @@ let LOGO_B64 = '';
 let lastRemoved = null;
 let undoTimeout = null;
 
+const FOOTER_DEFAULTS = {
+  line1: 'Sent by the HR PID team · People and Culture Group, UNOPS',
+  line2: 'Questions or feedback? Reply to this email.',
+  line3: 'Know someone who should receive this? Forward it and ask them to reach out to be added to the list.',
+  line4: 'To view previous newsletters, please click here.',
+  line4Url: '',
+};
+let footer = { ...FOOTER_DEFAULTS };
+
 /* ── Helpers ── */
 function esc(s) {
   return String(s ?? '')
@@ -122,6 +131,16 @@ function syncAllSections() {
       item.imageSize   = document.getElementById(`it-imgsize-${item.id}`)?.value ?? item.imageSize;
     });
   });
+}
+
+/* ── Footer sync ── */
+function syncFooter() {
+  footer.line1    = document.getElementById('ft-line1')?.value ?? footer.line1;
+  footer.line2    = document.getElementById('ft-line2')?.value ?? footer.line2;
+  footer.line3    = document.getElementById('ft-line3')?.value ?? footer.line3;
+  footer.line4    = document.getElementById('ft-line4')?.value ?? footer.line4;
+  footer.line4Url = document.getElementById('ft-line4-url')?.value ?? footer.line4Url;
+  render();
 }
 
 /* ── Section image handling ── */
@@ -387,6 +406,7 @@ function vals() {
     issue: (document.getElementById('f-issue')?.value || '1').trim(),
     month: (document.getElementById('f-month')?.value || 'April 2026').trim(),
     sections,
+    footer,
   };
 }
 
@@ -526,9 +546,13 @@ function buildEmailBody(v) {
 
   <!-- FOOTER -->
   <tr><td style="padding-top:32px;padding-bottom:8px;border-top:1px solid #DDE3EA;margin-top:32px;">
-    <p style="margin:0 0 4px 0;font-size:12px;color:#97999B;font-family:system-ui,-apple-system,sans-serif;">Sent by the HR PID team &middot; People and Culture Group, UNOPS</p>
-    <p style="margin:0 0 4px 0;font-size:12px;color:#97999B;font-family:system-ui,-apple-system,sans-serif;">Questions or feedback? Reply to this email.</p>
-    <p style="margin:0;font-size:12px;color:#97999B;font-family:system-ui,-apple-system,sans-serif;">Know someone who should receive this? Forward it and ask them to reach out to be added to the list.</p>
+    ${v.footer.line1 ? `<p style="margin:0 0 4px 0;font-size:12px;color:#97999B;font-family:system-ui,-apple-system,sans-serif;">${esc(v.footer.line1)}</p>` : ''}
+    ${v.footer.line2 ? `<p style="margin:0 0 4px 0;font-size:12px;color:#97999B;font-family:system-ui,-apple-system,sans-serif;">${esc(v.footer.line2)}</p>` : ''}
+    ${v.footer.line3 ? `<p style="margin:0 0 4px 0;font-size:12px;color:#97999B;font-family:system-ui,-apple-system,sans-serif;">${esc(v.footer.line3)}</p>` : ''}
+    ${v.footer.line4 ? (v.footer.line4Url
+      ? `<p style="margin:0;font-size:12px;color:#97999B;font-family:system-ui,-apple-system,sans-serif;"><a href="${esc(v.footer.line4Url)}" style="color:#0092D1;text-decoration:underline;">${esc(v.footer.line4)}</a></p>`
+      : `<p style="margin:0;font-size:12px;color:#97999B;font-family:system-ui,-apple-system,sans-serif;">${esc(v.footer.line4)}</p>`)
+    : ''}
   </td></tr>
 
 </table>
