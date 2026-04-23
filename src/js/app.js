@@ -23,14 +23,29 @@ let LOGO_B64 = '';
 let lastRemoved = null;
 let undoTimeout = null;
 
+const FONT_FAMILIES = {
+  'system-ui,-apple-system,sans-serif': 'System (default)',
+  'Arial,Helvetica,sans-serif':         'Arial',
+  'Georgia,Times,serif':                'Georgia',
+  'Verdana,Geneva,sans-serif':          'Verdana',
+  '"Courier New",Courier,monospace':    'Courier New',
+  '"Trebuchet MS",sans-serif':          'Trebuchet MS',
+};
+
+const FOOTER_LINE_DEFAULTS = { fontSize: '12', fontFamily: 'system-ui,-apple-system,sans-serif', color: '#97999B' };
+
 const FOOTER_DEFAULTS = {
   line1: 'Sent by the HR PID team · People and Culture Group, UNOPS',
   line2: 'Questions or feedback? Reply to this email.',
   line3: 'Know someone who should receive this? Forward it and ask them to reach out to be added to the list.',
   line4: 'To view previous newsletters, please click here.',
   line4Url: '',
+  line1Style: { ...FOOTER_LINE_DEFAULTS },
+  line2Style: { ...FOOTER_LINE_DEFAULTS },
+  line3Style: { ...FOOTER_LINE_DEFAULTS },
+  line4Style: { ...FOOTER_LINE_DEFAULTS },
 };
-let footer = { ...FOOTER_DEFAULTS };
+let footer = JSON.parse(JSON.stringify(FOOTER_DEFAULTS));
 
 /* ── Helpers ── */
 function esc(s) {
@@ -133,6 +148,48 @@ function syncAllSections() {
   });
 }
 
+/* ── Footer form building ── */
+function buildFooterForm() {
+  const lines = [
+    { n: '1', label: 'Line 1' },
+    { n: '2', label: 'Line 2' },
+    { n: '3', label: 'Line 3' },
+    { n: '4', label: 'Line 4' },
+  ];
+
+  const fontOpts = Object.entries(FONT_FAMILIES)
+    .map(([v, l]) => `<option value="${v}">${l}</option>`)
+    .join('');
+
+  const html = lines.map(({ n, label }) => {
+    const s = footer[`line${n}Style`];
+    const text = footer[`line${n}`];
+    return `
+    <div class="field">
+      <label for="ft-line${n}">${label}</label>
+      <input type="text" id="ft-line${n}" value="${esc(text)}" oninput="syncFooter()">
+      <div style="display:flex;gap:6px;align-items:center;margin-top:4px;">
+        <label style="font-size:11px;color:#6B7280;margin:0;white-space:nowrap;">Size</label>
+        <input type="number" id="ft-size-${n}" value="${s.fontSize}" min="8" max="32" style="width:52px;padding:3px 5px;font-size:12px;" oninput="syncFooter()">
+        <label style="font-size:11px;color:#6B7280;margin:0;white-space:nowrap;">Font</label>
+        <select id="ft-font-${n}" style="flex:1;padding:3px 5px;font-size:12px;min-width:0;" onchange="syncFooter()">
+          ${fontOpts.replace(`value="${s.fontFamily}"`, `value="${s.fontFamily}" selected`)}
+        </select>
+        <label style="font-size:11px;color:#6B7280;margin:0;white-space:nowrap;">Color</label>
+        <input type="color" id="ft-color-${n}" value="${s.color}" style="width:28px;height:24px;padding:0;border:1px solid #ccc;border-radius:4px;cursor:pointer;" oninput="syncFooter()">
+      </div>
+    </div>`;
+  }).join('');
+
+  const urlField = `
+    <div class="field" style="margin-bottom:0">
+      <label for="ft-line4-url">Line 4 — Link URL (optional)</label>
+      <input type="url" id="ft-line4-url" value="${esc(footer.line4Url)}" placeholder="https://..." oninput="syncFooter()">
+    </div>`;
+
+  document.getElementById('footer-fields').innerHTML = html + urlField;
+}
+
 /* ── Footer sync ── */
 function syncFooter() {
   footer.line1    = document.getElementById('ft-line1')?.value ?? footer.line1;
@@ -140,6 +197,12 @@ function syncFooter() {
   footer.line3    = document.getElementById('ft-line3')?.value ?? footer.line3;
   footer.line4    = document.getElementById('ft-line4')?.value ?? footer.line4;
   footer.line4Url = document.getElementById('ft-line4-url')?.value ?? footer.line4Url;
+  for (const n of ['1','2','3','4']) {
+    const s = footer[`line${n}Style`];
+    s.fontSize   = document.getElementById(`ft-size-${n}`)?.value   ?? s.fontSize;
+    s.fontFamily = document.getElementById(`ft-font-${n}`)?.value   ?? s.fontFamily;
+    s.color      = document.getElementById(`ft-color-${n}`)?.value  ?? s.color;
+  }
   render();
 }
 
@@ -548,13 +611,19 @@ function buildEmailBody(v) {
   <tr><td style="padding-top:36px;font-size:0;line-height:0;height:0;border-bottom:1px solid #DDE3EA;">&nbsp;</td></tr>
   <!-- FOOTER content -->
   <tr><td style="padding-top:16px;padding-bottom:8px;">
-    ${v.footer.line1 ? `<p style="margin:0 0 4px 0;font-size:12px;color:#97999B;font-family:system-ui,-apple-system,sans-serif;">${esc(v.footer.line1)}</p>` : ''}
-    ${v.footer.line2 ? `<p style="margin:0 0 4px 0;font-size:12px;color:#97999B;font-family:system-ui,-apple-system,sans-serif;">${esc(v.footer.line2)}</p>` : ''}
-    ${v.footer.line3 ? `<p style="margin:0 0 4px 0;font-size:12px;color:#97999B;font-family:system-ui,-apple-system,sans-serif;">${esc(v.footer.line3)}</p>` : ''}
-    ${v.footer.line4 ? (v.footer.line4Url
-      ? `<p style="margin:0;font-size:12px;color:#97999B;font-family:system-ui,-apple-system,sans-serif;"><a href="${esc(v.footer.line4Url)}" style="color:#0092D1;text-decoration:underline;">${esc(v.footer.line4)}</a></p>`
-      : `<p style="margin:0;font-size:12px;color:#97999B;font-family:system-ui,-apple-system,sans-serif;">${esc(v.footer.line4)}</p>`)
-    : ''}
+    ${['1','2','3'].map(n => {
+      const text = v.footer[`line${n}`];
+      if (!text) return '';
+      const s = v.footer[`line${n}Style`];
+      return `<p style="margin:0 0 4px 0;font-size:${s.fontSize}px;color:${s.color};font-family:${s.fontFamily};">${esc(text)}</p>`;
+    }).join('\n    ')}
+    ${v.footer.line4 ? (() => {
+      const s = v.footer.line4Style;
+      const baseStyle = `margin:0;font-size:${s.fontSize}px;color:${s.color};font-family:${s.fontFamily};`;
+      return v.footer.line4Url
+        ? `<p style="${baseStyle}"><a href="${esc(v.footer.line4Url)}" style="color:${s.color};text-decoration:underline;">${esc(v.footer.line4)}</a></p>`
+        : `<p style="${baseStyle}">${esc(v.footer.line4)}</p>`;
+    })() : ''}
   </td></tr>
 
 </table>
@@ -683,6 +752,7 @@ s2.body = `The HR PID Team has just kicked off the People – Talent Workspace, 
 sections.push(s2);
 
 rebuildSections();
+buildFooterForm();
 render();
 
 fetch('assets/logo/black_logo_b64.txt')

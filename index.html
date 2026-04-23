@@ -99,28 +99,7 @@
     <button class="btn-add" onclick="addSection()">+ Add section</button>
 
     <div class="section-label" style="margin-top:20px;">Footer</div>
-    <div class="section-block">
-      <div class="field">
-        <label for="ft-line1">Line 1</label>
-        <input type="text" id="ft-line1" value="Sent by the HR PID team · People and Culture Group, UNOPS" oninput="syncFooter()">
-      </div>
-      <div class="field">
-        <label for="ft-line2">Line 2</label>
-        <input type="text" id="ft-line2" value="Questions or feedback? Reply to this email." oninput="syncFooter()">
-      </div>
-      <div class="field">
-        <label for="ft-line3">Line 3</label>
-        <input type="text" id="ft-line3" value="Know someone who should receive this? Forward it and ask them to reach out to be added to the list." oninput="syncFooter()">
-      </div>
-      <div class="field">
-        <label for="ft-line4">Line 4</label>
-        <input type="text" id="ft-line4" value="To view previous newsletters, please click here." oninput="syncFooter()">
-      </div>
-      <div class="field" style="margin-bottom:0">
-        <label for="ft-line4-url">Line 4 — Link URL (optional)</label>
-        <input type="url" id="ft-line4-url" value="" placeholder="https://..." oninput="syncFooter()">
-      </div>
-    </div>
+    <div class="section-block" id="footer-fields"></div>
 
     <div class="undo-toast" id="undo-toast">
       <span>Removed</span>
