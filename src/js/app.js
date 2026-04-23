@@ -609,6 +609,30 @@ function showToast() {
   setTimeout(() => t.classList.remove('show'), 2500);
 }
 
+function downloadPDF() {
+  syncAllSections();
+  const v = vals();
+  const container = document.createElement('div');
+  container.innerHTML = buildEmailBody(v);
+  container.style.cssText = 'width:620px;background:#fff;padding:0;';
+  document.body.appendChild(container);
+
+  const filename = `Talent-Brief-Issue-${v.issue}-${v.month.replace(/\s+/g, '-')}.pdf`;
+
+  html2pdf()
+    .set({
+      margin:      [12, 0, 12, 0],
+      filename,
+      image:       { type: 'jpeg', quality: 0.95 },
+      html2canvas: { scale: 2, useCORS: true, width: 620 },
+      jsPDF:       { unit: 'mm', format: 'a4', orientation: 'portrait' },
+    })
+    .from(container)
+    .save()
+    .then(() => document.body.removeChild(container))
+    .catch(() => document.body.removeChild(container));
+}
+
 /* ── Init ── */
 const s0 = newSection('highlight');
 s0.body = `Welcome to the first issue of Talent+: A Brief — a monthly newsletter from the HR PID Team keeping you up to date on everything happening in Talent+ and the broader People technology space.\n\nIf this is useful to you, please share it with colleagues who should be on the list.`;
