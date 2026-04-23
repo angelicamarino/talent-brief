@@ -166,18 +166,17 @@ function buildFooterForm() {
     const text = footer[`line${n}`];
     return `
     <div class="field">
-      <label for="ft-line${n}">${label}</label>
-      <input type="text" id="ft-line${n}" value="${esc(text)}" oninput="syncFooter()">
-      <div style="display:flex;gap:6px;align-items:center;margin-top:4px;">
-        <label style="font-size:11px;color:#6B7280;margin:0;white-space:nowrap;">Size</label>
-        <input type="number" id="ft-size-${n}" value="${s.fontSize}" min="8" max="32" style="width:52px;padding:3px 5px;font-size:12px;" oninput="syncFooter()">
-        <label style="font-size:11px;color:#6B7280;margin:0;white-space:nowrap;">Font</label>
-        <select id="ft-font-${n}" style="flex:1;padding:3px 5px;font-size:12px;min-width:0;" onchange="syncFooter()">
-          ${fontOpts.replace(`value="${s.fontFamily}"`, `value="${s.fontFamily}" selected`)}
-        </select>
-        <label style="font-size:11px;color:#6B7280;margin:0;white-space:nowrap;">Color</label>
-        <input type="color" id="ft-color-${n}" value="${s.color}" style="width:28px;height:24px;padding:0;border:1px solid #ccc;border-radius:4px;cursor:pointer;" oninput="syncFooter()">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+        <label style="margin:0;">${label}</label>
+        <div style="display:flex;gap:4px;align-items:center;">
+          <input type="number" id="ft-size-${n}" value="${s.fontSize}" min="8" max="32" title="Font size (px)" style="width:44px;padding:2px 4px;font-size:11px;text-align:center;" oninput="syncFooter()">
+          <select id="ft-font-${n}" title="Font family" style="width:72px;padding:2px 2px;font-size:11px;" onchange="syncFooter()">
+            ${fontOpts.replace(`value="${s.fontFamily}"`, `value="${s.fontFamily}" selected`)}
+          </select>
+          <input type="color" id="ft-color-${n}" value="${s.color}" title="Text color" style="width:22px;height:22px;padding:0;border:1px solid #ccc;border-radius:3px;cursor:pointer;" oninput="syncFooter()">
+        </div>
       </div>
+      <input type="text" id="ft-line${n}" value="${esc(text)}" oninput="syncFooter()">
     </div>`;
   }).join('');
 
