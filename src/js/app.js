@@ -170,7 +170,7 @@ function buildFooterForm() {
         <label style="margin:0;">${label}</label>
         <div style="display:flex;gap:4px;align-items:center;">
           <input type="number" id="ft-size-${n}" value="${s.fontSize}" min="8" max="32" title="Font size (px)" style="width:44px;padding:2px 4px;font-size:11px;text-align:center;" oninput="syncFooter()">
-          <select id="ft-font-${n}" title="Font family" style="width:72px;padding:2px 2px;font-size:11px;" onchange="syncFooter()">
+          <select id="ft-font-${n}" title="Font family" style="width:110px;padding:2px 4px;font-size:11px;" onchange="syncFooter()">
             ${fontOpts.replace(`value="${s.fontFamily}"`, `value="${s.fontFamily}" selected`)}
           </select>
           <input type="color" id="ft-color-${n}" value="${s.color}" title="Text color" style="width:22px;height:22px;padding:0;border:1px solid #ccc;border-radius:3px;cursor:pointer;" oninput="syncFooter()">
