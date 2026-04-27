@@ -56,10 +56,17 @@ function esc(s) {
     .replace(/"/g,  '&quot;');
 }
 
+function linkify(escaped) {
+  return escaped.replace(
+    /\[([^\]]+)\]\(([^)]+)\)/g,
+    (_, text, url) => `<a href="${url}" style="color:#0092D1;text-decoration:underline;">${text}</a>`
+  );
+}
+
 function nl2p(text, style) {
   const lines = (text || '').split('\n').map(l => l.trim()).filter(Boolean);
   if (!lines.length) return '';
-  return lines.map(l => `<p style="${style}">${esc(l)}</p>`).join('');
+  return lines.map(l => `<p style="${style}">${linkify(esc(l))}</p>`).join('');
 }
 
 function buildLogoHeader() {
@@ -485,8 +492,8 @@ function buildItemRows(itemsData) {
     } else if (item.icon && item.icon !== 'none') {
       iconHTML = `<span style="margin-right:4px;font-size:13px;vertical-align:middle;">${item.icon}</span>`;
     }
-    const title = esc(item.title)       || '<em style="color:#97999B;">Untitled</em>';
-    const desc  = esc(item.description) || '';
+    const title = linkify(esc(item.title))       || '<em style="color:#97999B;">Untitled</em>';
+    const desc  = linkify(esc(item.description)) || '';
     const textHTML = `
       <p style="margin:0 0 3px 0;font-size:14px;font-weight:600;color:#0D1E2F;line-height:1.4;">${iconHTML}${title}</p>
       ${desc ? `<p style="margin:0;font-size:14px;font-weight:400;color:#00070A;line-height:1.7;">${desc}</p>` : ''}`;
@@ -614,14 +621,14 @@ function buildEmailBody(v) {
       const text = v.footer[`line${n}`];
       if (!text) return '';
       const s = v.footer[`line${n}Style`];
-      return `<p style="margin:0 0 4px 0;font-size:${s.fontSize}px;color:${s.color};font-family:${s.fontFamily};">${esc(text)}</p>`;
+      return `<p style="margin:0 0 4px 0;font-size:${s.fontSize}px;color:${s.color};font-family:${s.fontFamily};">${linkify(esc(text))}</p>`;
     }).join('\n    ')}
     ${v.footer.line4 ? (() => {
       const s = v.footer.line4Style;
       const baseStyle = `margin:0;font-size:${s.fontSize}px;color:${s.color};font-family:${s.fontFamily};`;
       return v.footer.line4Url
         ? `<p style="${baseStyle}"><a href="${esc(v.footer.line4Url)}" style="color:${s.color};text-decoration:underline;">${esc(v.footer.line4)}</a></p>`
-        : `<p style="${baseStyle}">${esc(v.footer.line4)}</p>`;
+        : `<p style="${baseStyle}">${linkify(esc(v.footer.line4))}</p>`;
     })() : ''}
   </td></tr>
 
