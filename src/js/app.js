@@ -23,6 +23,55 @@ let LOGO_B64 = '';
 let lastRemoved = null;
 let undoTimeout = null;
 
+const STORAGE_KEY = 'talentBrief_draft';
+
+/* ── Persistence ── */
+function saveState() {
+  try {
+    syncAllSections();
+    const state = {
+      sections,
+      footer,
+      nextSectionId,
+      nextItemId,
+      issue: document.getElementById('f-issue')?.value ?? '1',
+      month: document.getElementById('f-month')?.value ?? 'April 2026',
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch (_) {
+    /* localStorage quota exceeded or unavailable */
+  }
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return false;
+    const state = JSON.parse(raw);
+    if (!state || !Array.isArray(state.sections)) return false;
+
+    sections = state.sections;
+    footer = state.footer ?? JSON.parse(JSON.stringify(FOOTER_DEFAULTS));
+    nextSectionId = state.nextSectionId ?? 0;
+    nextItemId = state.nextItemId ?? 0;
+
+    const issueEl = document.getElementById('f-issue');
+    const monthEl = document.getElementById('f-month');
+    if (issueEl) issueEl.value = state.issue ?? '1';
+    if (monthEl) monthEl.value = state.month ?? 'April 2026';
+
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
+function clearDraft() {
+  if (!confirm('Reset all content to defaults? Your current draft will be lost.')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  location.reload();
+}
+
 const FONT_FAMILIES = {
   'system-ui,-apple-system,sans-serif': 'System (default)',
   'Arial,Helvetica,sans-serif':         'Arial',
@@ -654,6 +703,7 @@ ${buildEmailBody(v)}
 function render() {
   document.getElementById('email-preview').innerHTML = buildEmailBody(vals());
   updatePreviewScale();
+  saveState();
 }
 
 function copyForGmail() {
@@ -735,27 +785,29 @@ function downloadPDF() {
 }
 
 /* ── Init ── */
-const s0 = newSection('highlight');
-s0.body = `Welcome to the first issue of Talent+: A Brief — a monthly newsletter from the HR PID Team keeping you up to date on everything happening in Talent+ and the broader People technology space.\n\nIf this is useful to you, please share it with colleagues who should be on the list.`;
-sections.push(s0);
+if (!loadState()) {
+  const s0 = newSection('highlight');
+  s0.body = `Welcome to the first issue of Talent+: A Brief — a monthly newsletter from the HR PID Team keeping you up to date on everything happening in Talent+ and the broader People technology space.\n\nIf this is useful to you, please share it with colleagues who should be on the list.`;
+  sections.push(s0);
 
-const s1 = newSection('items');
-s1.heading = 'Talent+ Updates';
-s1.subtitle = 'Changes made this month';
-s1.items.push({
-  id: nextItemId++, category: 'system', icon: 'dot',
-  title: 'Reference checks now in Talent+',
-  description: 'Reference checks can now be initiated and tracked directly within Talent+, reducing the need to manage this step outside the system.',
-  image: '', imageSize: '160',
-});
-sections.push(s1);
+  const s1 = newSection('items');
+  s1.heading = 'Talent+ Updates';
+  s1.subtitle = 'Changes made this month';
+  s1.items.push({
+    id: nextItemId++, category: 'system', icon: 'dot',
+    title: 'Reference checks now in Talent+',
+    description: 'Reference checks can now be initiated and tracked directly within Talent+, reducing the need to manage this step outside the system.',
+    image: '', imageSize: '160',
+  });
+  sections.push(s1);
 
-const s2 = newSection('card');
-s2.heading = 'People – Talent Workspace';
-s2.subtitle = 'A new platform from the HR PID Team';
-s2.badge = 'Kicked off April 2026';
-s2.body = `The HR PID Team has just kicked off the People – Talent Workspace, a new platform designed to bring all HR processes and tools into one place for everyone at UNOPS.\n\nThis project is the next step in the People technology journey, building on the foundation laid by Talent+. Work began in April 2026 and we will keep you updated here each month as it progresses.`;
-sections.push(s2);
+  const s2 = newSection('card');
+  s2.heading = 'People – Talent Workspace';
+  s2.subtitle = 'A new platform from the HR PID Team';
+  s2.badge = 'Kicked off April 2026';
+  s2.body = `The HR PID Team has just kicked off the People – Talent Workspace, a new platform designed to bring all HR processes and tools into one place for everyone at UNOPS.\n\nThis project is the next step in the People technology journey, building on the foundation laid by Talent+. Work began in April 2026 and we will keep you updated here each month as it progresses.`;
+  sections.push(s2);
+}
 
 rebuildSections();
 buildFooterForm();
